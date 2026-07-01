@@ -1,0 +1,1745 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Jazz Noir - Pentest Suite</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;1,400&family=Space+Mono:wght@400;700&display=swap"
+        rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root {
+            --bg-color: #050505;
+            --sidebar-bg: #0c0c0c;
+            --panel-bg: rgba(12, 12, 12, 0.85);
+            --text-main: #d3c6b6;
+            --text-muted: #8b8075;
+            --accent-red: #c02626;
+            --accent-red-hover: #9e1a1a;
+            --accent-green: #4b6a4b;
+            --border-color: #2a2220;
+            --font-serif: 'Playfair Display', serif;
+            --font-mono: 'Space Mono', monospace;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            font-family: var(--font-mono);
+            height: 100vh;
+            display: flex;
+            overflow: hidden;
+            font-size: 14px;
+        }
+
+        /* Sidebar */
+        .sidebar {
+            width: 260px;
+            background-color: var(--sidebar-bg);
+            border-right: 1px solid var(--border-color);
+            display: flex;
+            flex-direction: column;
+            padding: 30px 0;
+            z-index: 10;
+        }
+
+        .logo-container {
+            text-align: center;
+            margin-bottom: 40px;
+        }
+
+        .logo-icon {
+            font-size: 24px;
+            color: var(--text-main);
+            margin-bottom: 10px;
+        }
+
+        .logo-text {
+            font-family: var(--font-serif);
+            font-size: 38px;
+            font-weight: 700;
+            line-height: 1;
+            letter-spacing: -1px;
+            color: var(--text-main);
+        }
+
+        .logo-subtext {
+            color: var(--accent-red);
+            font-size: 11px;
+            letter-spacing: 2px;
+            margin-top: 5px;
+            font-weight: 700;
+        }
+
+        .nav-menu {
+            list-style: none;
+            flex-grow: 1;
+        }
+
+        .nav-item {
+            padding: 12px 30px;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            color: var(--text-muted);
+            text-decoration: none;
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+
+        .nav-item:hover {
+            color: var(--text-main);
+            background-color: rgba(255, 255, 255, 0.02);
+        }
+
+        .nav-item.active {
+            background-color: var(--accent-red);
+            color: #fff;
+            border-radius: 4px;
+            margin: 0 15px;
+            padding: 12px 15px;
+        }
+
+        .nav-icon {
+            width: 20px;
+            text-align: center;
+            font-size: 16px;
+        }
+
+        .quote-box {
+            padding: 20px 30px;
+            border-top: 1px solid var(--border-color);
+            font-family: var(--font-serif);
+            font-style: italic;
+            color: var(--text-muted);
+            font-size: 13px;
+            line-height: 1.5;
+        }
+
+        .quote-author {
+            color: var(--accent-red);
+            text-align: right;
+            margin-top: 10px;
+            font-style: normal;
+            font-family: var(--font-mono);
+            font-size: 12px;
+        }
+
+        /* Main Content - Split Screen Container */
+        .main-content {
+            flex-grow: 1;
+            display: flex;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        /* Lado Esquerdo: Terminal Bruto */
+        .left-panel {
+            width: 50%;
+            background-color: #000;
+            display: flex;
+            flex-direction: column;
+            border-right: 1px solid var(--border-color);
+        }
+
+        /* Lado Direito: IA e Dashboard (Onde fica o Mafioso) */
+        .right-panel {
+            width: 50%;
+            background-color: #851313;
+            background-image: linear-gradient(rgba(10, 10, 12, 0.5), rgba(10, 10, 12, 0.8)), url('/static/bg.png');
+            background-size: cover;
+            background-position: center;
+            background-repeat: no-repeat;
+            display: flex;
+            flex-direction: column;
+            overflow-y: auto;
+            position: relative;
+        }
+
+        .header {
+            padding: 30px;
+        }
+
+        .main-title {
+            font-family: var(--font-serif);
+            font-size: 60px;
+            font-weight: 700;
+            color: var(--text-main);
+            line-height: 1;
+            margin-bottom: 5px;
+            text-shadow: 2px 2px 10px rgba(0, 0, 0, 0.8);
+        }
+
+        .main-subtitle {
+            color: var(--accent-red);
+            font-size: 18px;
+            letter-spacing: 4px;
+            font-weight: 700;
+            margin-bottom: 10px;
+            text-shadow: 1px 1px 5px rgba(0, 0, 0, 0.8);
+        }
+
+        .main-desc {
+            font-family: var(--font-serif);
+            font-size: 14px;
+            color: var(--text-muted);
+            text-shadow: 1px 1px 3px rgba(0, 0, 0, 0.8);
+        }
+
+        /* Dashboard Grid no lado direito */
+        .dashboard-grid {
+            padding: 20px 30px 100px 30px;
+            display: flex;
+            flex-direction: column;
+            gap: 25px;
+        }
+
+        .panel {
+            background-color: rgba(12, 12, 12, 0.4);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 12px;
+            padding: 25px;
+            backdrop-filter: blur(15px);
+            -webkit-backdrop-filter: blur(15px);
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.6);
+        }
+
+        .panel-title {
+            color: var(--accent-red);
+            font-size: 12px;
+            letter-spacing: 1px;
+            margin-bottom: 20px;
+            font-weight: 700;
+        }
+
+        /* Terminal Logs na Esquerda */
+        #terminal-logs {
+            flex-grow: 1;
+            background-color: #000;
+            padding: 20px;
+            font-family: var(--font-mono);
+            font-size: 13px;
+            color: var(--accent-green);
+            overflow-y: auto;
+            line-height: 1.5;
+        }
+
+        /* Footer / Terminal Bar movido para a Esquerda */
+        .footer {
+            height: 60px;
+            background-color: #050505;
+            border-top: 1px solid var(--border-color);
+            display: flex;
+            align-items: center;
+            padding: 0 20px;
+        }
+
+        .terminal-input {
+            flex-grow: 1;
+            padding-left: 10px;
+            color: var(--accent-green);
+            font-size: 14px;
+        }
+
+        .terminal-prompt {
+            color: var(--text-muted);
+            font-size: 14px;
+        }
+
+        /* Mission Panel */
+        .mission-info {
+            margin-bottom: 10px;
+        }
+
+        .mission-value {
+            color: var(--text-main);
+        }
+
+        .progress-bar-container {
+            margin-top: 25px;
+            background-color: rgba(255, 255, 255, 0.1);
+            height: 4px;
+            border-radius: 2px;
+            position: relative;
+        }
+
+        .progress-bar {
+            background-color: var(--accent-red);
+            height: 100%;
+            width: 47%;
+            border-radius: 2px;
+        }
+
+        .progress-text {
+            position: absolute;
+            right: 0;
+            top: -20px;
+            color: var(--accent-red);
+            font-size: 12px;
+        }
+
+        /* Summary Panel */
+        .stat-row {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 8px;
+            padding-bottom: 8px;
+            border-bottom: 1px dashed rgba(255, 255, 255, 0.05);
+        }
+
+        .stat-row:last-child {
+            border-bottom: none;
+            margin-bottom: 0;
+            padding-bottom: 0;
+        }
+
+        .stat-label {
+            color: var(--text-muted);
+        }
+
+        .stat-val {
+            font-weight: 700;
+        }
+
+        .val-total {
+            color: var(--text-main);
+        }
+
+        .val-critical {
+            color: var(--accent-red);
+        }
+
+        .val-high {
+            color: #d05c35;
+        }
+
+        .val-medium {
+            color: #d09c35;
+        }
+
+        .val-low {
+            color: var(--text-main);
+        }
+
+        /* Modal Glassmorphism */
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            z-index: 9999;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.6);
+            backdrop-filter: blur(8px);
+            justify-content: center;
+            align-items: center;
+        }
+
+        .modal-overlay.active {
+            display: flex;
+        }
+
+        .modal-box {
+            background: rgba(15, 15, 18, 0.75);
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            border-radius: 12px;
+            width: 80%;
+            max-width: 700px;
+            max-height: 80vh;
+            padding: 30px;
+            overflow-y: auto;
+            position: relative;
+            box-shadow: 0 25px 80px rgba(0, 0, 0, 0.9);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+        }
+
+        .modal-close {
+            position: absolute;
+            top: 15px;
+            right: 20px;
+            color: var(--text-muted);
+            cursor: pointer;
+            font-size: 22px;
+            background: none;
+            border: none;
+        }
+
+        .modal-close:hover {
+            color: var(--accent-red);
+        }
+
+        .modal-title {
+            font-family: var(--font-serif);
+            font-size: 24px;
+            color: var(--text-main);
+            margin-bottom: 5px;
+        }
+
+        .modal-severity {
+            font-size: 13px;
+            letter-spacing: 1px;
+            margin-bottom: 25px;
+        }
+
+        .modal-section {
+            margin: 20px 0;
+        }
+
+        .modal-section-title {
+            color: var(--accent-red);
+            font-size: 11px;
+            letter-spacing: 1.5px;
+            margin-bottom: 8px;
+            font-weight: bold;
+        }
+
+        .modal-section-content {
+            color: var(--text-main);
+            font-size: 13px;
+            line-height: 1.6;
+            white-space: pre-wrap;
+            font-family: var(--font-mono);
+            background: rgba(0, 0, 0, 0.4);
+            padding: 15px;
+            border-radius: 6px;
+            border: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        /* Scans Panel */
+        .view-panel {
+            display: none;
+        }
+
+        .view-panel.active {
+            display: block;
+        }
+
+        .finding-badge {
+            display: inline-block;
+            font-size: 9px;
+            padding: 2px 6px;
+            border-radius: 2px;
+            color: #fff;
+            background: #2a2220;
+            border: 1px solid var(--border-color);
+            letter-spacing: 0.5px;
+        }
+
+        .scan-row {
+            display: grid;
+            grid-template-columns: 2fr 1fr 1fr;
+            margin-bottom: 10px;
+            font-size: 12px;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .scan-target {
+            color: var(--text-main);
+        }
+
+        .scan-date {
+            color: var(--text-muted);
+        }
+
+        .scan-status.ongoing {
+            color: var(--text-muted);
+        }
+
+        .scan-status.done {
+            color: var(--accent-green);
+        }
+
+        .scan-status.fail {
+            color: var(--accent-red);
+        }
+
+        .finding-title {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .finding-title-text {
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        /* Footer / Terminal Bar */
+        .footer {
+            position: fixed;
+            bottom: 0;
+            left: 260px;
+            /* Largura da sidebar */
+            width: calc(100% - 260px);
+            height: 60px;
+            background-color: var(--sidebar-bg);
+            border-top: 1px solid var(--border-color);
+            display: flex;
+            align-items: center;
+            padding: 0 30px;
+            z-index: 20;
+        }
+
+        .now-playing {
+            color: var(--accent-red);
+            font-size: 12px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            width: 230px;
+            /* matches sidebar minus padding */
+        }
+
+        .terminal-input {
+            flex-grow: 1;
+            padding-left: 20px;
+            color: var(--accent-green);
+            font-size: 15px;
+            /* Aumentado */
+        }
+
+        .terminal-prompt {
+            color: var(--text-muted);
+            font-size: 15px;
+            /* Aumentado */
+        }
+
+        .terminal-cursor {
+            display: inline-block;
+            width: 8px;
+            height: 15px;
+            background-color: var(--text-main);
+            vertical-align: middle;
+            animation: blink 1s step-end infinite;
+            margin-left: 5px;
+        }
+
+        @keyframes blink {
+
+            0%,
+            100% {
+                opacity: 1;
+            }
+
+            50% {
+                opacity: 0;
+            }
+        }
+
+        /* ===== NOVOS ESTILOS: FINDINGS GROUPED ===== */
+
+        .filter-pills {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 15px;
+            flex-wrap: wrap;
+        }
+
+        .filter-pill {
+            padding: 4px 12px;
+            border-radius: 12px;
+            font-size: 11px;
+            cursor: pointer;
+            border: 1px solid var(--border-color);
+            background: transparent;
+            color: var(--text-muted);
+            transition: all 0.2s;
+        }
+
+        .filter-pill:hover {
+            color: var(--text-main);
+            border-color: var(--text-muted);
+        }
+
+        .filter-pill.active {
+            background: var(--accent-red);
+            color: #fff;
+            border-color: var(--accent-red);
+        }
+
+        .filter-pill.pill-critica.active {
+            background: #c02626;
+            border-color: #c02626;
+        }
+
+        .filter-pill.pill-alta.active {
+            background: #d05c35;
+            border-color: #d05c35;
+        }
+
+        .filter-pill.pill-media.active {
+            background: #d09c35;
+            border-color: #d09c35;
+        }
+
+        .filter-pill.pill-baixa.active {
+            background: #6b6b6b;
+            border-color: #6b6b6b;
+        }
+
+        .filter-pill.pill-info.active {
+            background: #4b6a4b;
+            border-color: #4b6a4b;
+        }
+
+        .plugin-group {
+            margin-bottom: 12px;
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            overflow: hidden;
+        }
+
+        .plugin-group-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 10px 14px;
+            background: rgba(255, 255, 255, 0.02);
+            cursor: pointer;
+            transition: background 0.2s;
+            user-select: none;
+        }
+
+        .plugin-group-header:hover {
+            background: rgba(255, 255, 255, 0.04);
+        }
+
+        .plugin-group-header-left {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .plugin-group-name {
+            font-size: 13px;
+            font-weight: 700;
+            color: var(--text-main);
+        }
+
+        .plugin-group-total {
+            font-size: 11px;
+            color: var(--text-muted);
+        }
+
+        .plugin-group-sev-badges {
+            display: flex;
+            gap: 4px;
+        }
+
+        .sev-badge {
+            font-size: 10px;
+            padding: 1px 6px;
+            border-radius: 3px;
+            font-weight: 700;
+        }
+
+        .sev-badge.critica {
+            background: rgba(192, 38, 38, 0.3);
+            color: #ff4444;
+        }
+
+        .sev-badge.alta {
+            background: rgba(208, 92, 53, 0.3);
+            color: #ff7744;
+        }
+
+        .sev-badge.media {
+            background: rgba(208, 156, 53, 0.3);
+            color: #ffcc44;
+        }
+
+        .sev-badge.baixa {
+            background: rgba(107, 107, 107, 0.3);
+            color: #aaaaaa;
+        }
+
+        .sev-badge.info {
+            background: rgba(75, 106, 75, 0.3);
+            color: #88cc88;
+        }
+
+        .plugin-group-arrow {
+            color: var(--text-muted);
+            transition: transform 0.2s;
+            font-size: 12px;
+        }
+
+        .plugin-group-arrow.collapsed {
+            transform: rotate(-90deg);
+        }
+
+        .plugin-group-body {
+            border-top: 1px solid var(--border-color);
+        }
+
+        .plugin-group-body.collapsed {
+            display: none;
+        }
+
+        .finding-card {
+            display: flex;
+            align-items: stretch;
+            border-bottom: 1px solid rgba(42, 34, 32, 0.5);
+            cursor: pointer;
+            transition: background 0.15s;
+        }
+
+        .finding-card:last-child {
+            border-bottom: none;
+        }
+
+        .finding-card:hover {
+            background: rgba(255, 255, 255, 0.03);
+        }
+
+        .finding-card-sev-bar {
+            width: 4px;
+            flex-shrink: 0;
+        }
+
+        .finding-card-sev-bar.bar-critica {
+            background: #c02626;
+        }
+
+        .finding-card-sev-bar.bar-alta {
+            background: #d05c35;
+        }
+
+        .finding-card-sev-bar.bar-media {
+            background: #d09c35;
+        }
+
+        .finding-card-sev-bar.bar-baixa {
+            background: #6b6b6b;
+        }
+
+        .finding-card-sev-bar.bar-info {
+            background: #4b6a4b;
+        }
+
+        .finding-card-body {
+            flex: 1;
+            padding: 10px 14px;
+            display: grid;
+            grid-template-columns: 1fr auto;
+            gap: 8px;
+            align-items: center;
+        }
+
+        .finding-card-title {
+            font-size: 12px;
+            color: var(--text-main);
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        .finding-card-meta {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 11px;
+            color: var(--text-muted);
+            white-space: nowrap;
+        }
+
+        .finding-card-date {
+            color: var(--text-muted);
+        }
+
+        .finding-card-sev-label {
+            font-size: 10px;
+            font-weight: 700;
+            padding: 2px 8px;
+            border-radius: 3px;
+        }
+
+        .finding-card-sev-label.sev-critica {
+            background: rgba(192, 38, 38, 0.2);
+            color: #ff4444;
+        }
+
+        .finding-card-sev-label.sev-alta {
+            background: rgba(208, 92, 53, 0.2);
+            color: #ff7744;
+        }
+
+        .finding-card-sev-label.sev-media {
+            background: rgba(208, 156, 53, 0.2);
+            color: #ffcc44;
+        }
+
+        .finding-card-sev-label.sev-baixa {
+            background: rgba(107, 107, 107, 0.2);
+            color: #aaaaaa;
+        }
+
+        .finding-card-sev-label.sev-info {
+            background: rgba(75, 106, 75, 0.2);
+            color: #88cc88;
+        }
+
+        .finding-card-desc {
+            grid-column: 1 / -1;
+            font-size: 11px;
+            color: var(--text-muted);
+            line-height: 1.4;
+            display: none;
+            max-height: 60px;
+            overflow: hidden;
+        }
+
+        .finding-card-desc.expanded {
+            display: block;
+        }
+
+        /* Count bar */
+        .sev-count-bar {
+            display: flex;
+            height: 6px;
+            border-radius: 3px;
+            overflow: hidden;
+            margin: 10px 0;
+            gap: 2px;
+        }
+
+        .sev-count-bar .bar-seg {
+            height: 100%;
+            border-radius: 2px;
+            transition: width 0.3s;
+        }
+
+        .bar-seg.bar-critica {
+            background: #c02626;
+        }
+
+        .bar-seg.bar-alta {
+            background: #d05c35;
+        }
+
+        .bar-seg.bar-media {
+            background: #d09c35;
+        }
+
+        .bar-seg.bar-baixa {
+            background: #6b6b6b;
+        }
+
+        .bar-seg.bar-info {
+            background: #4b6a4b;
+        }
+
+        /* Modal melhorado */
+        .modal-box {
+            width: 85%;
+            max-width: 800px;
+        }
+
+        .modal-header-sev {
+            display: inline-block;
+            padding: 3px 12px;
+            border-radius: 3px;
+            font-size: 11px;
+            font-weight: 700;
+            letter-spacing: 1px;
+            margin-bottom: 15px;
+        }
+
+        .modal-tabs {
+            display: flex;
+            gap: 2px;
+            margin-bottom: 15px;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .modal-tab {
+            padding: 8px 16px;
+            font-size: 11px;
+            color: var(--text-muted);
+            cursor: pointer;
+            border-bottom: 2px solid transparent;
+            transition: all 0.2s;
+        }
+
+        .modal-tab:hover {
+            color: var(--text-main);
+        }
+
+        .modal-tab.active {
+            color: var(--accent-red);
+            border-bottom-color: var(--accent-red);
+        }
+
+        .modal-tab-content {
+            display: none;
+        }
+
+        .modal-tab-content.active {
+            display: block;
+        }
+
+        .modal-raw-json {
+            background: rgba(0, 0, 0, 0.4);
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            padding: 12px;
+            font-size: 11px;
+            line-height: 1.5;
+            max-height: 400px;
+            overflow: auto;
+            white-space: pre-wrap;
+            word-break: break-all;
+            color: var(--text-muted);
+        }
+
+        .modal-report-content {
+            background: rgba(0, 0, 0, 0.3);
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            padding: 14px;
+            font-size: 12px;
+            line-height: 1.6;
+            white-space: pre-wrap;
+            color: var(--text-main);
+        }
+    </style>
+</head>
+
+<body>
+
+    <aside class="sidebar">
+        <div class="logo-container">
+            <i class="fa-solid fa-hat-fedora logo-icon"></i>
+            <div class="logo-text">Jazz Noir</div>
+            <div class="logo-subtext">— PENTEST SUITE —</div>
+        </div>
+
+        <nav class="nav-menu">
+            <a href="#" class="nav-item active" data-view="dashboard">
+                <i class="fa-solid fa-house nav-icon"></i>
+                <span>Dashboard</span>
+            </a>
+            <a href="#" class="nav-item" data-view="vulnerabilidades">
+                <i class="fa-solid fa-bug nav-icon"></i>
+                <span>Vulnerabilidades</span>
+            </a>
+        </nav>
+
+        <div class="quote-box">
+            "In security, as in jazz, timing is everything. Find the right note, own the system."
+            <div class="quote-author">- JazzNoir</div>
+        </div>
+    </aside>
+
+    <main class="main-content">
+        <div class="header">
+            <h1 class="main-title">Jazz Noir</h1>
+            <div class="main-subtitle">— PENTEST SUITE —</div>
+            <div class="main-desc">Digite um dominio ou IP no terminal para iniciar a varredura</div>
+        </div>
+
+        <div class="dashboard-grid">
+
+            <!-- ===== VIEW: DASHBOARD ===== -->
+            <div class="view-panel active" data-view="dashboard">
+                <div class="panel">
+                    <div class="panel-title">ALVO ATUAL</div>
+                    <div class="mission-info">
+                        <span class="stat-label">Alvo:</span>
+                        <span class="mission-value" id="current-target">—</span>
+                    </div>
+                    <div class="mission-info">
+                        <span class="stat-label">Findings:</span>
+                        <span class="mission-value" id="total-findings">0</span>
+                    </div>
+                    <div class="mission-info">
+                        <span class="stat-label">Ultimo scan:</span>
+                        <span class="mission-value" id="last-scan-time">—</span>
+                    </div>
+                </div>
+
+                <div class="panel">
+                    <div class="panel-title">SUMARIO</div>
+                    <div class="sev-count-bar" id="sev-dist-bar">
+                        <div class="bar-seg bar-info" style="width:100%"></div>
+                    </div>
+                    <div class="stat-row">
+                        <span class="stat-label">Total</span>
+                        <span class="stat-val val-total">0</span>
+                    </div>
+                    <div class="stat-row">
+                        <span class="stat-label">Criticas</span>
+                        <span class="stat-val val-critical">0</span>
+                    </div>
+                    <div class="stat-row">
+                        <span class="stat-label">Altas</span>
+                        <span class="stat-val val-high">0</span>
+                    </div>
+                    <div class="stat-row">
+                        <span class="stat-label">Medias</span>
+                        <span class="stat-val val-medium">0</span>
+                    </div>
+                    <div class="stat-row">
+                        <span class="stat-label">Baixas</span>
+                        <span class="stat-val val-low">0</span>
+                    </div>
+                </div>
+
+                <div class="panel" style="grid-column: span 2;">
+                    <div class="panel-title">RESULTADOS</div>
+                    <div style="font-size:11px; color:var(--text-muted); margin-bottom:10px;">Clique em um item para ver
+                        o relatorio completo do NeuralCore AI</div>
+                    <div class="filter-pills" id="filter-pills-dash">
+                        <span class="filter-pill active" data-sev="all">Todos</span>
+                        <span class="filter-pill pill-critica" data-sev="critica">Crítica</span>
+                        <span class="filter-pill pill-alta" data-sev="alta">Alta</span>
+                        <span class="filter-pill pill-media" data-sev="media">Média</span>
+                        <span class="filter-pill pill-baixa" data-sev="baixa">Baixa</span>
+                        <span class="filter-pill pill-info" data-sev="info">Info</span>
+                    </div>
+                    <div id="findings-grouped-container">
+                        <div style="color:var(--text-muted); font-size:12px;">Digite um dominio ou IP no terminal abaixo
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ===== VIEW: VULNERABILIDADES ===== -->
+            <div class="view-panel" data-view="vulnerabilidades">
+                <div class="panel" style="grid-column: span 2;">
+                    <div class="panel-title">VULNERABILIDADES ENCONTRADAS</div>
+                    <div style="font-size:11px; color:var(--text-muted); margin-bottom:10px;">Itens classificados como
+                        Critica, Alta ou Media pelo NeuralCore AI.</div>
+                    <div class="filter-pills" id="filter-pills-vuln">
+                        <span class="filter-pill active" data-sev="all">Todas</span>
+                        <!-- LADO ESQUERDO: TERMINAL BRUTO -->
+                        <div class="left-panel">
+                            <div class="header"
+                                style="padding: 20px; border-bottom: 1px solid var(--border-color); display: flex; justify-content: space-between;">
+                                <div>
+                                    <h1 class="main-title" style="font-size: 24px;">TERMINAL</h1>
+                                    <div class="main-subtitle" style="font-size: 10px; margin:0;">OSINT_FEED v2.1</div>
+                                </div>
+                                <span id="log-status"
+                                    style="color: var(--text-muted); font-size: 12px; align-self: center;">Aguardando...</span>
+                            </div>
+
+                            <div id="terminal-logs"
+                                style="flex-grow: 1; background-color: #000; border: 1px solid var(--border-color); padding: 15px; font-family: var(--font-mono); font-size: 12px; color: var(--accent-green); overflow-y: auto; box-shadow: inset 0 0 10px rgba(0,0,0,0.8);">
+                                <div><span style="color:var(--text-muted)">[System]</span> Módulo Maryam carregado.
+                                </div>
+                                <div><span style="color:var(--text-muted)">[System]</span> IA Groq (Llama-3.1-8b)
+                                    inicializada.</div>
+                                <div><span style="color:var(--text-muted)">[System]</span> Pronta para iniciar o OSINT.
+                                </div>
+                            </div>
+
+                            <div class="footer">
+                                <div class="terminal-input" style="display: flex; align-items: center; width: 100%;">
+                                    <span class="terminal-prompt">jazznoir@pentest:~$</span>
+                                    <input type="text" id="cmd-input"
+                                        placeholder="Digite o alvo (ex: tesla.com) ou dork (ex: dork sqli)"
+                                        autocomplete="off">
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- LADO DIREITO: DASHBOARD GLASSMORPHISM & TOM MAFIOSO -->
+                        <div class="right-panel">
+                            <div class="header" style="padding-bottom: 0;">
+                                <h1 class="main-title">Jazz Noir</h1>
+                                <div class="main-subtitle">— PENTEST SUITE —</div>
+                                <div class="main-desc">Scan. Analyze. Exploit. Own the night.</div>
+                            </div>
+
+                            <div class="dashboard-grid">
+                                <!-- Painel de Resumo Estiloso -->
+                                <div class="panel"
+                                    style="display: flex; justify-content: space-between; align-items: center;">
+                                    <div>
+                                        <div class="panel-title" style="margin-bottom: 5px;">VULNERABILITY SUMMARY</div>
+                                        <div style="font-size: 11px; color: var(--text-muted);">Groq AI distributed
+                                            risks</div>
+                                    </div>
+                                    <div style="display: flex; gap: 20px; text-align: center;">
+                                        <div>
+                                            <div class="val-total" style="font-size: 28px; font-weight: 700;">0</div>
+                                            <div style="font-size: 10px; color: var(--text-muted);">Total</div>
+                                        </div>
+                                        <div>
+                                            <div class="val-critical"
+                                                style="font-size: 28px; font-weight: 700; color: #ff4444;">0</div>
+                                            <div style="font-size: 10px; color: var(--text-muted);">Críticas</div>
+                                        </div>
+                                        <div>
+                                            <div class="val-high"
+                                                style="font-size: 28px; font-weight: 700; color: #ff7744;">0</div>
+                                            <div style="font-size: 10px; color: var(--text-muted);">Altas</div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Lista de Cartões da IA -->
+                                <div class="panel" style="flex-grow: 1;">
+                                    <div class="panel-title">LATEST DISCOVERIES (AI GENERATED)</div>
+                                    <div id="latest-scans-container"
+                                        style="display: flex; flex-direction: column; gap: 15px;">
+                                        <div style="color:var(--text-muted); font-size: 12px;">Carregando inteligência
+                                            do banco de dados...</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+    </main>
+
+    <!-- Modal de Detalhes do Finding (MELHORADO) -->
+    <div class="modal-overlay" id="finding-modal" onclick="if(event.target===this)closeFindingModal()">
+        <div class="modal-box">
+            <button class="modal-close" onclick="closeFindingModal()">&times;</button>
+            <div class="modal-section" style="display:flex; align-items:center; gap:12px; margin-bottom:10px;">
+                <span class="modal-header-sev" id="modal-sev-badge"
+                    style="background:rgba(192,38,38,0.2);color:#ff4444;">CRÍTICA</span>
+                <span style="font-size:11px;color:var(--text-muted);" id="modal-plugin-label">plugin</span>
+            </div>
+            <div class="modal-title" id="modal-title">Título</div>
+
+            <div class="modal-tabs">
+                <span class="modal-tab active" data-tab="desc">Descrição</span>
+                <span class="modal-tab" data-tab="report">Relatório AI</span>
+                <span class="modal-tab" data-tab="raw">Raw Data</span>
+            </div>
+
+            <div class="modal-tab-content active" id="tab-desc">
+                <div class="modal-section-content" id="modal-description" style="white-space:pre-wrap;">—</div>
+            </div>
+
+            <div class="modal-tab-content" id="tab-report">
+                <div class="modal-report-content" id="modal-report">Relatório do NeuralCore AI ainda não processado para
+                    este item.</div>
+            </div>
+
+            <div class="modal-tab-content" id="tab-raw">
+                <div class="modal-raw-json" id="modal-raw">Nenhum dado bruto disponível.</div>
+            </div>
+        </div>
+    </div>
+
+    <div class="footer">
+        <div class="now-playing" id="music-toggle" title="Click to Play/Pause"
+            style="cursor: pointer; transition: color 0.3s;">
+            <i class="fa-solid fa-music"></i>
+            <span id="music-text">Now Playing: Miles Davis - So What</span>
+            <audio id="bg-music" loop>
+                <source src="/jazz.mp3" type="audio/mpeg">
+            </audio>
+        </div>
+        <div class="terminal-input" style="display: flex; align-items: center;">
+            <span class="terminal-prompt">jazznoir@pentest:~$</span>
+            <input type="text" id="cmd-input" placeholder="ex: exemplo.com ou 192.168.1.1" autocomplete="off">
+        </div>
+    </div>
+    </main>
+
+    <style>
+        /* Estilos adicionais para o input interativo */
+        #cmd-input {
+            background: transparent;
+            border: none;
+            color: var(--text-main);
+            font-family: var(--font-mono);
+            font-size: 15px;
+            /* Aumentado */
+            flex-grow: 1;
+            margin-left: 8px;
+            outline: none;
+            height: 40px;
+            /* Aumentado para área de clique */
+        }
+
+        #cmd-input::placeholder {
+            color: rgba(139, 128, 117, 0.5);
+            /* text-muted com transparência */
+        }
+
+        #music-toggle:hover {
+            color: var(--text-main);
+        }
+    </style>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const cmdInput = document.getElementById('cmd-input');
+            const musicToggle = document.getElementById('music-toggle');
+            const bgMusic = document.getElementById('bg-music');
+            const musicText = document.getElementById('music-text');
+
+            // Lógica do Player de Música
+            musicToggle.addEventListener('click', () => {
+                if (bgMusic.paused) {
+                    bgMusic.play().catch(e => {
+                        alert("Música não encontrada! Coloque um arquivo 'jazz.mp3' na pasta do projeto.");
+                    });
+                    musicToggle.style.color = 'var(--accent-green)';
+                    musicText.innerText = 'Playing: Miles Davis - So What';
+                } else {
+                    bgMusic.pause();
+                    musicToggle.style.color = 'var(--accent-red)';
+                    musicText.innerText = 'Paused: Miles Davis - So What';
+                }
+            });
+
+            cmdInput.addEventListener('keypress', async (e) => {
+                if (e.key === 'Enter') {
+                    let command = cmdInput.value.trim();
+                    if (!command) return;
+
+                    // Extrair um 'alvo' provável para a interface
+                    let target = "desconhecido";
+
+                    // Se o usuário digitou apenas uma palavra (ex: cia.gov, 192.168.0.1)
+                    // e não começou com scan/dork/engine, assumimos que é um scan (OSINT)
+                    const knownEngines = ["fullscan", "full", "scan", "dork", "e4gl30s1nt", "e4gl30", "mrholmes", "wireless", "capture"];
+                    const firstWord = command.split(" ")[0];
+                    const isKnownCmd = knownEngines.some(e => firstWord.startsWith(e));
+
+                    if (command.split(" ").length === 1 && !isKnownCmd) {
+                        target = command;
+                        command = "fullscan " + target; // full scan com todas as engines
+                    } else if (command.includes("--target")) {
+                        const parts = command.split("--target");
+                        if (parts.length > 1) {
+                            target = parts[1].trim().split(" ")[0];
+                        }
+                    } else if (command.split(" ").length > 1) {
+                        target = command.split(" ")[1];
+                    }
+
+                    // Desabilitar enquanto carrega
+                    cmdInput.disabled = true;
+                    cmdInput.style.opacity = '0.5';
+
+                    const terminal = document.getElementById('terminal-logs');
+                    const status = document.getElementById('log-status');
+
+                    try {
+                        // --- COMANDO WIRELESS ---
+                        if (command.startsWith("wireless scan")) {
+                            status.innerText = "Escaneando redes...";
+                            status.style.color = "var(--accent-red)";
+
+                            terminal.innerHTML += `<div><span style="color:var(--text-main)">[${new Date().toLocaleTimeString()}]</span> Iniciando varredura wireless com Wifite2...</div>`;
+                            terminal.scrollTop = terminal.scrollHeight;
+
+                            const resp = await fetch('/api/wireless/scan', {
+                                method: 'POST',
+                                headers: { 'Content-Type': 'application/json' },
+                                body: JSON.stringify({ interface: 'wlan0' })
+                            });
+                            const data = await resp.json();
+
+                            terminal.innerHTML += `<div><span style="color:#8b8075">[+]</span> Scan ID: ${data.scan_id} | Task: ${data.task_id}</div>`;
+                            terminal.scrollTop = terminal.scrollHeight;
+
+                            setTimeout(() => {
+                                terminal.innerHTML += `<div><span style="color:#8b8075">[+]</span> Wifite2 escaneando canais em busca de redes...</div>`;
+                                terminal.scrollTop = terminal.scrollHeight;
+                            }, 2000);
+                            setTimeout(() => {
+                                terminal.innerHTML += `<div><span style="color:#4b6a4b">[SUCCESS]</span> Scan concluído. Redes salvas no banco.</div>`;
+                                terminal.scrollTop = terminal.scrollHeight;
+                                status.innerText = "Pronto";
+                                status.style.color = "var(--text-muted)";
+                            }, 5000);
+
+                            // --- COMANDO WIRELESS CAPTURE ---
+                        } else if (command.startsWith("wireless capture") || command.startsWith("capture")) {
+                            const bssid = command.split(" ").pop();
+                            status.innerText = "Capturando...";
+                            status.style.color = "var(--accent-red)";
+
+                            terminal.innerHTML += `<div><span style="color:var(--text-main)">[${new Date().toLocaleTimeString()}]</span> Iniciando captura PMKID/Handshake para ${bssid}...</div>`;
+                            terminal.scrollTop = terminal.scrollHeight;
+
+                            const resp = await fetch('/api/wireless/capture', {
+                                method: 'POST',
+                                headers: { 'Content-Type': 'application/json' },
+                                body: JSON.stringify({ interface: 'wlan0', bssid: bssid, channel: 6 })
+                            });
+                            const capData = await resp.json();
+
+                            terminal.innerHTML += `<div><span style="color:#8b8075">[+]</span> Task ID: ${capData.task_id}</div>`;
+                            terminal.scrollTop = terminal.scrollHeight;
+
+                            setTimeout(() => {
+                                terminal.innerHTML += `<div><span style="color:#8b8075">[+]</span> hcxdumptool capturando PMKID do alvo...</div>`;
+                                terminal.scrollTop = terminal.scrollHeight;
+                            }, 3000);
+                            setTimeout(() => {
+                                terminal.innerHTML += `<div><span style="color:#8b8075">[+]</span> hcxtools convertendo hash para formato 22000...</div>`;
+                                terminal.scrollTop = terminal.scrollHeight;
+                            }, 6000);
+                            setTimeout(() => {
+                                terminal.innerHTML += `<div><span style="color:#4b6a4b">[SUCCESS]</span> Hash armazenado no banco para quebra offline.</div>`;
+                                terminal.scrollTop = terminal.scrollHeight;
+                                status.innerText = "Pronto";
+                                status.style.color = "var(--text-muted)";
+                            }, 9000);
+
+                        } else if (command.startsWith("fullscan") || command.startsWith("full ")) {
+                            status.innerText = "Varredura completa...";
+                            status.style.color = "var(--accent-red)";
+
+                            const engTarget = command.split(" ").slice(1).join(" ") || target;
+                            terminal.innerHTML += `<div><span style="color:var(--text-main)">[${new Date().toLocaleTimeString()}]</span> Iniciando FULL SCAN em: <b>${engTarget}</b></div>`;
+                            terminal.innerHTML += `<div><span style="color:#8b8075">[+]</span> Engines: Maryam + E4GL30S1NT + Mr.Holmes + INURLBR</div>`;
+                            terminal.scrollTop = terminal.scrollHeight;
+
+                            const resp = await fetch('/api/scan', {
+                                method: 'POST',
+                                headers: { 'Content-Type': 'application/json' },
+                                body: JSON.stringify({ target: engTarget, command: 'fullscan ' + engTarget })
+                            });
+                            const data = await resp.json();
+
+                            terminal.innerHTML += `<div><span style="color:#8b8075">[+]</span> Task: ${data.task_id}</div>`;
+                            terminal.scrollTop = terminal.scrollHeight;
+
+                            const steps = [
+                                [2000, "Maryam: coletando subdominios e DNS..."],
+                                [5000, "E4GL30S1NT: varredura OSINT completa..."],
+                                [8000, "Mr.Holmes: recon de DNS e subdominios..."],
+                                [11000, "INURLBR: dorking com banco de 7548 strings..."],
+                                [14000, "NeuralCore AI: analisando lote de achados..."],
+                                [17000, "Relatorios sendo gerados..."],
+                            ];
+                            steps.forEach(([delay, msg]) => {
+                                setTimeout(() => {
+                                    terminal.innerHTML += `<div><span style="color:#8b8075">[+]</span> ${msg}</div>`;
+                                    terminal.scrollTop = terminal.scrollHeight;
+                                }, delay);
+                            });
+
+                            setTimeout(() => {
+                                terminal.innerHTML += `<div><span style="color:#4b6a4b">[SUCCESS]</span> Full scan concluido! Painel atualizado.</div>`;
+                                terminal.scrollTop = terminal.scrollHeight;
+                                status.innerText = "Pronto";
+                                status.style.color = "var(--text-muted)";
+                                fetchFindingsStats();
+                                fetchGroupedFindings(currentDashFilter, 'findings-grouped-container', false);
+                                fetchGroupedFindings(currentVulnFilter, 'vuln-grouped-container', true);
+                            }, 20000);
+
+                        } else if (command.startsWith("e4gl30s1nt") || command.startsWith("e4gl30") || command.startsWith("mrholmes")) {
+                            const engine = command.split(" ")[0];
+                            const engTarget = command.split(" ")[1] || target;
+                            status.innerText = `Executando ${engine}...`;
+                            status.style.color = "var(--accent-red)";
+
+                            terminal.innerHTML += `<div><span style="color:var(--text-main)">[${new Date().toLocaleTimeString()}]</span> ${engine} em: <b>${engTarget}</b></div>`;
+                            terminal.scrollTop = terminal.scrollHeight;
+
+                            const resp = await fetch('/api/scan', {
+                                method: 'POST',
+                                headers: { 'Content-Type': 'application/json' },
+                                body: JSON.stringify({ target: engTarget, command: command })
+                            });
+                            const data = await resp.json();
+
+                            terminal.innerHTML += `<div><span style="color:#8b8075">[+]</span> Task disparada: ${data.task_id || data.message}</div>`;
+                            terminal.scrollTop = terminal.scrollHeight;
+
+                            setTimeout(() => {
+                                terminal.innerHTML += `<div><span style="color:#4b6a4b">[SUCCESS]</span> ${engine} concluido. Dados enviados ao Claude-BugHunter.</div>`;
+                                terminal.scrollTop = terminal.scrollHeight;
+                                status.innerText = "Pronto";
+                                status.style.color = "var(--text-muted)";
+                                fetchFindingsStats();
+                                fetchGroupedFindings(currentDashFilter, 'findings-grouped-container', false);
+                                fetchGroupedFindings(currentVulnFilter, 'vuln-grouped-container', true);
+                            }, 5000);
+
+                        } else {
+                            const response = await fetch('/api/scan', {
+                                method: 'POST',
+                                headers: { 'Content-Type': 'application/json' },
+                                body: JSON.stringify({ target: target, command: command })
+                            });
+
+                            const responseData = await response.json();
+
+                            if (responseData.type === "dork") {
+                                status.innerText = "Executando INURLBR...";
+                                status.style.color = "var(--accent-red)";
+
+                                terminal.innerHTML += `<div><span style="color:var(--text-main)">[${new Date().toLocaleTimeString()}]</span> Iniciando Dorking no Google. Alvo de busca: <b>${responseData.target}</b></div>`;
+                                terminal.scrollTop = terminal.scrollHeight;
+
+                                setTimeout(() => {
+                                    terminal.innerHTML += `<div><span style="color:#8b8075">[+]</span> Carregando strings do banco de dados (sqli, senhas, etc)...</div>`;
+                                    terminal.scrollTop = terminal.scrollHeight;
+                                }, 1000);
+
+                                setTimeout(() => {
+                                    terminal.innerHTML += `<div><span style="color:#8b8075">[+]</span> Contornando proteções e executando buscas avançadas via INURLBR...</div>`;
+                                    terminal.scrollTop = terminal.scrollHeight;
+                                }, 2500);
+
+                                setTimeout(() => {
+                                    terminal.innerHTML += `<div><span style="color:#4b6a4b">[SUCCESS]</span> INURLBR Finalizou. URLs suspeitas enviadas ao Claude-BugHunter!</div>`;
+                                    terminal.scrollTop = terminal.scrollHeight;
+                                }, 4000);
+                            } else {
+                                status.innerText = "Executando OSINT...";
+                                status.style.color = "var(--accent-red)";
+
+                                terminal.innerHTML += `<div><span style="color:var(--text-main)">[${new Date().toLocaleTimeString()}]</span> Iniciando varredura OSINT em: <b>${responseData.target}</b></div>`;
+                                terminal.scrollTop = terminal.scrollHeight;
+
+                                setTimeout(() => {
+                                    terminal.innerHTML += `<div><span style="color:#8b8075">[+]</span> Buscando DNS e Subdomínios em base de dados OTX/Sectrails...</div>`;
+                                    terminal.scrollTop = terminal.scrollHeight;
+                                }, 1000);
+
+                                setTimeout(() => {
+                                    terminal.innerHTML += `<div><span style="color:#8b8075">[+]</span> Fazendo Dorking no Bing para vazamentos de Email corporativos...</div>`;
+                                    terminal.scrollTop = terminal.scrollHeight;
+                                }, 2500);
+
+                                setTimeout(() => {
+                                    terminal.innerHTML += `<div><span style="color:#4b6a4b">[SUCCESS]</span> Maryam Finalizou coleta. Dados enviados ao Claude-BugHunter para análise.</div>`;
+                                    terminal.scrollTop = terminal.scrollHeight;
+                                }, 4000);
+                            }
+
+                            setTimeout(() => {
+                                terminal.innerHTML += `<div><span style="color:#d09c35">[NeuralCore AI]</span> Analisando lote de achados com BugHunter Engine...</div>`;
+                                terminal.scrollTop = terminal.scrollHeight;
+                            }, 5000);
+
+                            setTimeout(() => {
+                                terminal.innerHTML += `<div><span style="color:var(--accent-red)">[NeuralCore AI]</span> Análise concluída! Painel de Resumo será atualizado.</div>`;
+                                terminal.scrollTop = terminal.scrollHeight;
+
+                                status.innerText = "Pronto";
+                                status.style.color = "var(--text-muted)";
+                                fetchFindingsStats();
+                                fetchGroupedFindings(currentDashFilter, 'findings-grouped-container', false);
+                                fetchGroupedFindings(currentVulnFilter, 'vuln-grouped-container', true);
+                            }, 8000);
+                        }
+
+                    } catch (err) {
+                        console.error(err);
+                        alert("Erro ao contatar o servidor. Verifique se o Flask está rodando.");
+                    } finally {
+                        cmdInput.value = '';
+                        cmdInput.disabled = false;
+                        cmdInput.style.opacity = '1';
+                        cmdInput.focus();
+                    }
+                }
+            });
+
+            // ===== FUNÇÕES DE FILTRO =====
+            let currentDashFilter = 'all';
+            let currentVulnFilter = 'all';
+
+            function setupFilterPills(containerId, onChange) {
+                const pills = document.querySelectorAll(`#${containerId} .filter-pill`);
+                pills.forEach(p => {
+                    p.addEventListener('click', () => {
+                        pills.forEach(x => x.classList.remove('active'));
+                        p.classList.add('active');
+                        onChange(p.dataset.sev);
+                    });
+                });
+            }
+
+            // ===== FETCH GROUPED FINDINGS =====
+            async function fetchGroupedFindings(severity, containerId, isVuln) {
+                try {
+                    let url = '/api/findings/grouped';
+                    if (severity && severity !== 'all') {
+                        url += `?severity=${severity}`;
+                    } else if (isVuln) {
+                        url += '?severity=critica,alta,media';
+                    }
+                    const response = await fetch(url);
+                    if (!response.ok) return;
+                    const groups = await response.json();
+                    const container = document.getElementById(containerId);
+
+                    if (!groups || groups.length === 0) {
+                        container.innerHTML = `<div style="color:var(--text-muted); font-size:12px;">Nenhuma vulnerabilidade encontrada ainda.</div>`;
+                        return;
+                    }
+
+                    const targetEl = document.getElementById('current-target');
+                    let firstDomain = '';
+
+                    let html = '';
+                    for (const group of groups) {
+                        const filtered = isVuln
+                            ? group.findings.filter(f => {
+                                const s = (f.severity || '').toLowerCase();
+                                return s.includes('critica') || s.includes('alta') || s.includes('media');
+                            })
+                            : group.findings;
+
+                        if (filtered.length === 0 && isVuln) continue;
+                        if (filtered.length === 0 && severity !== 'all') continue;
+
+                        const displayFindings = severity !== 'all'
+                            ? filtered.filter(f => (f.severity || '').toLowerCase().includes(severity.toLowerCase()))
+                            : filtered;
+
+                        if (displayFindings.length === 0) continue;
+
+                        if (!firstDomain && displayFindings[0].title) {
+                            const m = displayFindings[0].title.match(/(?:[\w.-]+\.[\w.-]+)/);
+                            if (m) firstDomain = m[0];
+                        }
+
+                        const pluginShort = group.plugin_source.replace("OSINT Scanner", "").replace("Framework", "").replace("Suite", "").trim();
+                        const total = group.total;
+                        const groupId = `grp-${group.plugin_source.replace(/[^a-zA-Z0-9]/g, '')}`;
+
+                        let sevBadges = '';
+                        const sevMap = [
+                            ['critica', group.criticas], ['alta', group.altas],
+                            ['media', group.medias], ['baixa', group.baixas], ['info', group.info]
+                        ];
+                        for (const [name, count] of sevMap) {
+                            if (count > 0) {
+                                sevBadges += `<span class="sev-badge ${name}">${name.toUpperCase()} ${count}</span>`;
+                            }
+                        }
+
+                        html += `
+                        <div class="plugin-group">
+                            <div class="plugin-group-header" onclick="toggleGroup('${groupId}')">
+                                <div class="plugin-group-header-left">
+                                    <span class="plugin-group-arrow" id="arr-${groupId}">▼</span>
+                                    <span class="plugin-group-name">${pluginShort}</span>
+                                    <span class="plugin-group-total">${total} itens</span>
+                                </div>
+                                <div class="plugin-group-sev-badges">
+                                    ${sevBadges}
+                                </div>
+                            </div>
+                            <div class="plugin-group-body" id="${groupId}">
+                                ${displayFindings.map(f => {
+                            const date = new Date(f.created_at).toLocaleDateString('pt-BR');
+                            const sevKey = (f.severity || 'info').toLowerCase().replace(/[^a-z]/g, '');
+                            const sevClass = sevKey.includes('crit') ? 'critica' :
+                                sevKey.includes('alt') ? 'alta' :
+                                    sevKey.includes('media') || sevKey.includes('medi') ? 'media' :
+                                        sevKey.includes('baixa') || sevKey.includes('baix') ? 'baixa' : 'info';
+                            const desc = (f.description || '').substring(0, 120);
+                            return `
+                                    <div class="finding-card" onclick="showFindingModal(${f.id})">
+                                        <div class="finding-card-sev-bar bar-${sevClass}"></div>
+                                        <div class="finding-card-body">
+                                            <div class="finding-card-title">${f.title}</div>
+                                            <div class="finding-card-meta">
+                                                <span class="finding-card-date">${date}</span>
+                                                <span class="finding-card-sev-label sev-${sevClass}">${f.severity || 'Info'}</span>
+                                            </div>
+                                            ${desc ? `<div class="finding-card-desc">${desc}</div>` : ''}
+                                        </div>
+                                    </div>`;
+                        }).join('')}
+                            </div>
+                        </div>`;
+                    }
+
+                    if (html === '') {
+                        container.innerHTML = `<div style="color:var(--text-muted); font-size:12px;">Nenhum resultado para este filtro.</div>`;
+                    } else {
+                        container.innerHTML = html;
+                    }
+                    if (firstDomain) targetEl.innerText = firstDomain;
+
+                } catch (e) {
+                    console.error("Erro ao buscar grouped findings:", e);
+                }
+            }
+
+            function toggleGroup(id) {
+                const body = document.getElementById(id);
+                const arrow = document.getElementById('arr-' + id);
+                if (body && arrow) {
+                    body.classList.toggle('collapsed');
+                    arrow.classList.toggle('collapsed');
+                }
+            }
+
+            // ===== FETCH STATS =====
+            async function fetchFindingsStats() {
+                try {
+                    const response = await fetch('/api/findings/stats');
+                    if (response.ok) {
+                        const stats = await response.json();
+                        document.querySelector('#total-findings').innerText = stats.total;
+                        document.querySelector('.val-total').innerText = stats.total;
+                        document.querySelector('.val-critical').innerText = stats.criticas;
+                        document.querySelector('.val-high').innerText = stats.altas;
+                        document.querySelector('.val-medium').innerText = stats.medias;
+                        document.querySelector('.val-low').innerText = stats.baixas;
+
+                        // Update severity bar
+                        const bar = document.getElementById('sev-dist-bar');
+                        if (bar) {
+                            const total = stats.total || 1;
+                            const parts = [
+                                { cls: 'bar-critica', val: stats.criticas },
+                                { cls: 'bar-alta', val: stats.altas },
+                                { cls: 'bar-media', val: stats.medias },
+                                { cls: 'bar-baixa', val: stats.baixas },
+                                { cls: 'bar-info', val: total - stats.criticas - stats.altas - stats.medias - stats.baixas },
+                            ];
+                            bar.innerHTML = parts.map(p =>
+                                `<div class="bar-seg ${p.cls}" style="width:${(p.val / total * 100).toFixed(1)}%"></div>`
+                            ).join('');
+                        }
+                    }
+                } catch (e) {
+                    console.error("Erro ao buscar stats: ", e);
+                }
+            }
+
+            // ===== MODAL MELHORADO =====
+            async function showFindingModal(id) {
+                try {
+                    const resp = await fetch(`/api/findings/${id}`);
+                    if (!resp.ok) return;
+                    const f = await resp.json();
+
+                    document.getElementById('modal-title').innerText = f.title || 'Sem título';
+
+                    const sevKey = (f.severity || 'info').toLowerCase().replace(/[^a-z]/g, '');
+                    const sevClass = sevKey.includes('crit') ? 'critica' :
+                        sevKey.includes('alt') ? 'alta' :
+                            sevKey.includes('media') ? 'media' :
+                                sevKey.includes('baixa') ? 'baixa' : 'info';
+                    const sevColors = { critica: '#ff4444', alta: '#ff7744', media: '#ffcc44', baixa: '#aaaaaa', info: '#88cc88' };
+                    const sevBgs = { critica: 'rgba(192,38,38,0.2)', alta: 'rgba(208,92,53,0.2)', media: 'rgba(208,156,53,0.2)', baixa: 'rgba(107,107,107,0.2)', info: 'rgba(75,106,75,0.2)' };
+
+                    const badge = document.getElementById('modal-sev-badge');
+                    badge.innerText = (f.severity || 'INFO').toUpperCase();
+                    badge.style.color = sevColors[sevClass] || '#88cc88';
+                    badge.style.background = sevBgs[sevClass] || 'rgba(75,106,75,0.2)';
+
+                    document.getElementById('modal-plugin-label').innerText = f.plugin_source || '';
+
+                    // Extract description and AI report
+                    const descText = f.description || '';
+                    const reportIdx = descText.indexOf('--- JAIZZ NOIR');
+                    let cleanDesc = descText;
+                    let aiReport = '';
+
+                    if (reportIdx >= 0) {
+                        cleanDesc = descText.substring(0, reportIdx).trim();
+                        aiReport = descText.substring(reportIdx).trim();
+                    }
+
+                    if (!aiReport) {
+                        aiReport = 'Relatório do NeuralCore AI ainda não processado para este item.';
+                    }
+
+                    document.getElementById('modal-description').innerText = cleanDesc || 'Sem descrição adicional.';
+                    document.getElementById('modal-report').innerText = aiReport;
+
+                    // Raw data
+                    const rawEl = document.getElementById('modal-raw');
+                    if (f.raw_data && Object.keys(f.raw_data).length > 0) {
+                        rawEl.innerText = JSON.stringify(f.raw_data, null, 2);
+                    } else {
+                        rawEl.innerText = 'Nenhum dado bruto disponível.';
+                    }
+
+                    // Reset tabs
+                    document.querySelectorAll('.modal-tab').forEach(t => t.classList.remove('active'));
+                    document.querySelectorAll('.modal-tab-content').forEach(t => t.classList.remove('active'));
+                    document.querySelector('.modal-tab[data-tab="desc"]').classList.add('active');
+                    document.getElementById('tab-desc').classList.add('active');
+
+                    document.getElementById('finding-modal').classList.add('active');
+                } catch (e) {
+                    console.error("Erro ao carregar detalhes do finding:", e);
+                }
+            }
+
+            function closeFindingModal() {
+                document.getElementById('finding-modal').classList.remove('active');
+            }
+
+            document.addEventListener('keydown', (e) => {
+                if (e.key === 'Escape') closeFindingModal();
+            });
+
+            // Modal tabs
+            document.addEventListener('click', (e) => {
+                const tab = e.target.closest('.modal-tab');
+                if (tab && document.getElementById('finding-modal').classList.contains('active')) {
+                    document.querySelectorAll('.modal-tab').forEach(t => t.classList.remove('active'));
+                    document.querySelectorAll('.modal-tab-content').forEach(t => t.classList.remove('active'));
+                    tab.classList.add('active');
+                    document.getElementById('tab-' + tab.dataset.tab).classList.add('active');
+                }
+            });
+
+            // ===== NAVEGAÇÃO =====
+            document.querySelectorAll('.nav-item').forEach(item => {
+                item.addEventListener('click', function (e) {
+                    e.preventDefault();
+                    document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+                    this.classList.add('active');
+                    const view = this.dataset.view || 'dashboard';
+                    document.querySelectorAll('.view-panel').forEach(p => {
+                        p.classList.toggle('active', p.dataset.view === view);
+                    });
+                });
+            });
+
+            // ===== SETUP FILTERS =====
+            setupFilterPills('filter-pills-dash', (sev) => {
+                currentDashFilter = sev;
+                fetchGroupedFindings(sev, 'findings-grouped-container', false);
+            });
+            setupFilterPills('filter-pills-vuln', (sev) => {
+                currentVulnFilter = sev;
+                fetchGroupedFindings(sev, 'vuln-grouped-container', true);
+            });
+
+            // ===== INIT =====
+            fetchFindingsStats();
+            fetchGroupedFindings('all', 'findings-grouped-container', false);
+            fetchGroupedFindings('all', 'vuln-grouped-container', true);
+
+            setInterval(() => {
+                fetchFindingsStats();
+                fetchGroupedFindings(currentDashFilter, 'findings-grouped-container', false);
+                fetchGroupedFindings(currentVulnFilter, 'vuln-grouped-container', true);
+            }, 5000);
+        });
+    </script>
+</body>
+
+</html>
