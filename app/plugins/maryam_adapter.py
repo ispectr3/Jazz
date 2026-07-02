@@ -4,6 +4,7 @@ import dns.resolver
 import dns.exception
 
 from app.plugins.base import ScannerAdapter
+from app.plugins.loader import register
 
 COMMON_SUBDOMAINS = [
     "www", "mail", "admin", "dev", "api", "vpn", "webmail", "cpanel",
@@ -22,6 +23,7 @@ COMMON_USERS = [
 ]
 
 
+@register()
 class MaryamAdapter(ScannerAdapter):
     def __init__(self):
         self.session = requests.Session()

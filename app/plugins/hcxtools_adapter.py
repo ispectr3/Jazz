@@ -1,6 +1,8 @@
 import re
 from app.plugins.base import ScannerAdapter
+from app.plugins.loader import register
 
+@register()
 class HcxtoolsAdapter(ScannerAdapter):
     @property
     def name(self) -> str:

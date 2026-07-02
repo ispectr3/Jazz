@@ -1,6 +1,8 @@
 import json
 from app.plugins.base import ScannerAdapter
+from app.plugins.loader import register
 
+@register()
 class PromptInjectAdapter(ScannerAdapter):
     @property
     def name(self) -> str:

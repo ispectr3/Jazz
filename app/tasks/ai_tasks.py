@@ -2,8 +2,56 @@ from app.extensions import celery_app, db
 from app.models.base import Finding
 import os
 from groq import Groq
+from app.ai.anonymizer import get_anonymizer
 
 client = Groq()
+
+FEW_SHOT_EXAMPLES = """
+--- EXEMPLO INFO: PORTA 80 ABERTA ---
+Titulo: Porta Aberta: 80/HTTP
+Descricao: Porta 80 (HTTP) esta aberta.
+Chain-of-Thought:
+1. Comportamento: Porta HTTP padrao.
+2. Arquitetura: Servidor web comum.
+3. Impacto: Nenhum, esperado.
+-> Severidade: Info
+
+--- EXEMPLO CRITICA: .ENV EXPOSTO ---
+Titulo: Path Encontrado: /.env
+Descricao: Arquivo .env acessivel, contem chaves de API.
+Chain-of-Thought:
+1. Comportamento: Arquivo de configuracao exposto.
+2. Arquitetura: Contem credenciais de banco, API keys.
+3. Impacto: Comprometimento total do ambiente.
+-> Severidade: Critica
+
+--- EXEMPLO MEDIA: SPF AUSENTE ---
+Titulo: SPF Ausente: dominio.com
+Descricao: Registro SPF nao encontrado.
+Chain-of-Thought:
+1. Comportamento: Sem politica SPF no DNS.
+2. Arquitetura: Email sem protecao contra spoofing.
+3. Impacto: Phishing, engenharia social.
+-> Severidade: Media
+
+--- EXEMPLO ALTA: PAINEL ADMIN ---
+Titulo: Painel Admin: admin.dominio.com
+Descricao: Painel de login administrativo encontrado.
+Chain-of-Thought:
+1. Comportamento: Formulario de login admin.
+2. Arquitetura: Provavelmente sem MFA.
+3. Impacto: Acesso administrativo ao sistema.
+-> Severidade: Alta
+
+--- EXEMPLO INFO: REGISTRO DNS ---
+Titulo: DNS TXT: 20 registros
+Descricao: Registros TXT para dominio.com.
+Chain-of-Thought:
+1. Comportamento: Registro DNS padrao.
+2. Arquitetura: Configuracao de email.
+3. Impacto: Nenhum, configuracao valida.
+-> Severidade: Info
+"""
 
 @celery_app.task(name='ai_tasks.analyze_finding')
 def analyze_finding_task(finding_id: int):
@@ -15,96 +63,105 @@ def analyze_finding_task(finding_id: int):
         if not finding:
             return "Finding not found"
 
-        print(f"[{finding.plugin_source}] Iniciando análise NeuralCore AI do Finding #{finding_id}...")
-        
-        # Constrói o prompt de cibersegurança usando os dados do Finding
-        raw_evidence = str(finding.raw_data)[:2000] # Limita a 2000 caracteres para não estourar o limite de tokens
-        
-        prompt = f"""
-Você é um Hacker Sênior de Bug Bounty e Especialista de Red Team operando a ferramenta de CTI 'Jaizz Noir'.
-Seu conhecimento base inclui as dezenas de matrizes de ataque e heurísticas do repositório 'Claude-BugHunter'.
+        print(f"[{finding.plugin_source}] Iniciando analise NeuralCore AI do Finding #{finding_id}...")
 
-Sua missão é triar os dados crus de um scanner (como OSINT ou Dorking) e escrever um relatório impecável de Bug Bounty identificando a vulnerabilidade exata.
+        raw_evidence = str(finding.raw_data)[:2000]
+        
+        prompt = f"""Claude-BugHunter — Hacker Senior de Bug Bounty.
 
---- DADOS DA VULNERABILIDADE BRUTA ---
-Scanner Origem: {finding.plugin_source}
-Título: {finding.title}
-Descrição Original: {finding.description}
-Evidência Bruta (Payload/JSON): {raw_evidence}
+## REGRA: Chain-of-Thought OBRIGATORIO
+Para cada achado, analise passo a passo:
+1. Comportamento — O que este dado revela?
+2. Arquitetura — Qual servico/tecnologia esta envolvida?
+3. Impacto — Se explorado, qual o dano real?
+Apenas depois destas 3 etapas, de o veredito.
+
+## EXEMPLOS DE CLASSIFICACAO (Few-Shot)
+{FEW_SHOT_EXAMPLES}
+
+## DIRETRIZES
+- Nao invente vulnerabilidades onde so ha informacao.
+- Portas HTTP/HTTPS padrao, registros DNS, WHOIS = Info.
+- .env, .git, backup expostos, banco de dados publico = Critica.
+- Painel admin sem MFA, CVE com exploit = Alta.
+- SPF ausente, SSL fraco, headers faltando = Media/Baixa.
+- Se em duvida, seja conservador: Baixa ou Info.
+
+--- DADOS DO ACHADO ---
+Scanner: {finding.plugin_source}
+Titulo: {finding.title}
+Descricao: {finding.description}
+Evidencia: {raw_evidence}
 ----------------------------------------
 
-Sua saída deve SER EXATAMENTE E APENAS UM JSON VÁLIDO (sem markdown ou texto extra ao redor) contendo as seguintes chaves:
+Retorne APENAS UM JSON valido (sem markdown):
 {{
-  "severity": "<Critica, Alta, Media, Baixa, ou Info>",
-  "cvss_estimate": "<Sua estimativa de Score CVSS ex: 8.5>",
-  "cwe": "<Ex: CWE-89 SQL Injection>",
-  "executive_summary": "<1 parágrafo incisivo resumindo o impacto comercial do bug>",
-  "attack_vector": "<Como um atacante do mundo real exploraria isso (PoC teorica)>",
-  "remediation": "<1 a 2 passos práticos para o Blue Team corrigir a falha>"
+  "severity": "Critica|Alta|Media|Baixa|Info",
+  "cvss_estimate": "8.5",
+  "cwe": "CWE-89 SQL Injection",
+  "executive_summary": "Resumo do impacto comercial real.",
+  "attack_vector": "Como explorar na pratica.",
+  "remediation": "Passos para corrigir."
 }}
 """
 
         try:
+            anon = get_anonymizer()
+            safe_prompt = anon.anonymize(prompt)
             chat_completion = client.chat.completions.create(
                 messages=[
                     {
                         "role": "system",
-                        "content": "Você é uma IA especializada em Bug Bounty. Você responde ESTRITAMENTE em JSON limpo e validável."
+                        "content": "Claude-BugHunter: IA especializada em Bug Bounty. Siga Chain-of-Thought rigorosamente. Responda apenas JSON valido."
                     },
                     {
                         "role": "user",
-                        "content": prompt,
+                        "content": safe_prompt,
                     }
                 ],
                 model="llama-3.1-8b-instant",
-                temperature=0.3,
-                max_tokens=1024,
+                temperature=0.15,
+                max_tokens=2048,
                 response_format={"type": "json_object"}
             )
             
             import json
-            ai_response = chat_completion.choices[0].message.content
+            ai_response = anon.restore_response(chat_completion.choices[0].message.content)
             try:
                 parsed_json = json.loads(ai_response)
-                # Formata a string bonita para o BD
-                formatted_report = f"""--- JAIZZ NOIR - BUG HUNTER REPORT ---
+                formatted_report = f"""--- JAIZZ NOIR / CLAUDE-BUGHUNTER REPORT ---
 CWE: {parsed_json.get('cwe', 'N/A')}
-Estimativa CVSS: {parsed_json.get('cvss_estimate', 'N/A')}
+CVSS: {parsed_json.get('cvss_estimate', 'N/A')}
 
-* Resumo Executivo: 
+* Resumo Executivo:
 {parsed_json.get('executive_summary', '')}
 
-* Vetor de Ataque / Exploração:
+* Vetor de Ataque:
 {parsed_json.get('attack_vector', '')}
 
-* Remediação Recomendada:
+* Remediacao:
 {parsed_json.get('remediation', '')}
 """
                 new_severity = parsed_json.get('severity', finding.severity)
                 
             except Exception as json_err:
-                # Se falhar o parse JSON, salva o texto cru
-                formatted_report = f"--- ANÁLISE IA (GROQ) ---\n{ai_response}"
+                formatted_report = f"--- ANALISE IA (GROQ) ---\n{ai_response}"
                 new_severity = "Desconhecida"
             
-            # Anexa a resposta da IA na descrição do Finding original
             finding.description = f"{finding.description}\n\n{formatted_report}"
             
-            # Atualiza a severidade se foi inferida algo novo válido
-            valid_severities = ["Crítica", "Alta", "Média", "Baixa", "Info"]
-            # Normalizar para title case ex: 'Alta'
+            valid_severities = ["Critica", "Alta", "Media", "Baixa", "Info"]
             new_severity_clean = str(new_severity).strip().title()
-            # Tratamento especial para remover acentos caso o modelo retorne 'Critica' sem acento
-            if new_severity_clean == "Critica": new_severity_clean = "Crítica"
-            if new_severity_clean == "Media": new_severity_clean = "Média"
+            if new_severity_clean == "Critica": new_severity_clean = "Critica"
+            if new_severity_clean == "Media": new_severity_clean = "Media"
             
             if new_severity_clean in valid_severities:
                 finding.severity = new_severity_clean
                 
             db.session.commit()
-            print(f"[{finding.plugin_source}] Análise NeuralCore AI concluída para o Finding #{finding_id}.")
+            print(f"[{finding.plugin_source}] Analise NeuralCore AI concluida para Finding #{finding_id}.")
             return f"Success: {finding_id}"
 
         except Exception as e:
-            print(f"[{finding.plugin_source}] Erro na análise NeuralCore AI: {e}")
+            print(f"[{finding.plugin_source}] Erro na analise NeuralCore AI: {e}")
             return f"Error: {e}"

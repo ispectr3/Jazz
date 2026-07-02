@@ -1,0 +1,16 @@
+__pycache__/
+*.pyc
+*.pyo
+.DS_Store
+*.db
+celery_broker.db
+celery_results.db
+*.log
+.env
+venv/
+.tools/
+wordlists/
+.PLAN/
+*.zip
+jazz.mp3
+.env

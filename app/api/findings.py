@@ -120,8 +120,11 @@ def get_findings():
 @findings_bp.route('/grouped', methods=['GET'])
 def get_findings_grouped():
     severity_filter = request.args.get("severity")
+    project_id = request.args.get("project_id", type=int)
 
     base_q = Finding.query.order_by(Finding.created_at.desc())
+    if project_id:
+        base_q = base_q.filter_by(project_id=project_id)
     if severity_filter:
         sf = _build_severity_filter(severity_filter)
         if sf:

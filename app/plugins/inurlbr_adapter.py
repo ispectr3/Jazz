@@ -4,6 +4,7 @@ import requests
 from bs4 import BeautifulSoup
 
 from app.plugins.base import ScannerAdapter
+from app.plugins.loader import register
 
 DORK_PATTERNS = [
     (r"(?i)(select|union|insert|drop|exec|declare)", "SQL Injection"),
@@ -50,6 +51,7 @@ CRAWL_PATHS = [
 ]
 
 
+@register()
 class InurlbrAdapter(ScannerAdapter):
     def __init__(self):
         self.session = requests.Session()

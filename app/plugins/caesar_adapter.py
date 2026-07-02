@@ -6,6 +6,7 @@ import dns.resolver
 import dns.exception
 
 from app.plugins.base import ScannerAdapter
+from app.plugins.loader import register
 
 SHODAN_KEY = os.getenv("SHODAN_API_KEY", "")
 
@@ -50,6 +51,7 @@ SKIP_MODULES = {
 }
 
 
+@register()
 class CaesarAdapter(ScannerAdapter):
     def __init__(self):
         self.session = requests.Session()

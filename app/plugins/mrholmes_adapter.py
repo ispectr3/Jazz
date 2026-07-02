@@ -7,6 +7,7 @@ import dns.resolver
 import dns.exception
 
 from app.plugins.base import ScannerAdapter
+from app.plugins.loader import register
 
 COMMON_PORTS = [
     (22, "SSH"), (80, "HTTP"), (443, "HTTPS"),
@@ -58,6 +59,7 @@ TAKEOVER_SIGNATURES = {
 }
 
 
+@register()
 class MrHolmesAdapter(ScannerAdapter):
     def __init__(self):
         self.session = requests.Session()
