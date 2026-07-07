@@ -7,6 +7,7 @@ from .engine import PipelinePhase
 class AIAnalysisPhase(PipelinePhase):
     name = "ai_analysis"
     description = "Análise dos resultados com IA (explicações, risk score, recomendações)"
+    parallel_group = 3
 
     async def run(self, ctx):
         ctx.risk_scores["ai_verified"] = True
@@ -80,6 +81,7 @@ class AIAnalysisPhase(PipelinePhase):
 class ReportPhase(PipelinePhase):
     name = "report"
     description = "Geração de relatórios HTML, JSON, Markdown"
+    parallel_group = 4
 
     async def run(self, ctx):
         reports_dir = os.path.join(os.path.dirname(__file__), "..", "reports")

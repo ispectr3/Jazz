@@ -48,11 +48,18 @@ class ValidationGate:
     def __init__(self):
         self.never_submit = NEVER_SUBMIT_PATTERNS
 
-    def _has_poc(self, description: str) -> bool:
+    def _has_poc(self, description: str, extra: Optional[dict] = None) -> bool:
         has_url = bool(re.search(r"https?://[^\s]+", description))
-        has_request = bool(re.search(r"(GET|POST|PUT|DELETE|PATCH)\s+\S+", description))
-        has_payload = bool(re.search(r"(<script|alert\(|' OR |1=1|\.\./|\$\{)", description))
-        return has_url and (has_request or has_payload)
+        has_request = bool(re.search(r"(GET|POST|PUT|DELETE|PATCH)\s+\S+\s+HTTP", description))
+        has_payload = bool(re.search(r"(<script|alert\(|confirm\(|prompt\(|fetch\(|' OR |1=1|\.\./|\$\{|sleep\()", description, re.IGNORECASE))
+        has_extra = bool(extra and (extra.get("evidence") or extra.get("raw_data")))
+        if has_url and (has_request or has_payload):
+            return True
+        if has_request and has_payload:
+            return True
+        if has_extra:
+            return True
+        return False
 
     def _is_in_scope(self, description: str, title: str) -> bool:
         text = f"{title} {description}".lower()
@@ -85,7 +92,7 @@ class ValidationGate:
         text = f"{title} {description}"
 
         # Q1: Tem evidencia HTTP (request + response)?
-        if not self._has_poc(description) and not extra:
+        if not self._has_poc(description, extra):
             return GateResult(
                 passed=False, gate=1,
                 question="Q1: Evidencia HTTP real?",
@@ -131,7 +138,7 @@ class ValidationGate:
             )
 
         # Q6: Impacto provado com dados reais?
-        if not self._has_poc(description) and extra and not extra.get("evidence"):
+        if not self._has_poc(description, extra):
             return GateResult(
                 passed=False, gate=6,
                 question="Q6: Impacto provado com dados reais?",

@@ -3,11 +3,12 @@ Flask-SQLAlchemy
 Flask-Migrate
 Flask-JWT-Extended
 Flask-Sock
-Celery
-redis
-psycopg2-binary
+celery[sqlalchemy]
 pydantic
 python-dotenv
 groq
 Flask-CORS
 langfuse
+openai
+google-genai
+PyYAML

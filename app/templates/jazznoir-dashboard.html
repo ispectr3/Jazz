@@ -10,15 +10,17 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
         :root {
-            --bg-color: #050505;
-            --sidebar-bg: #0c0c0c;
-            --panel-bg: rgba(12, 12, 12, 0.85);
-            --text-main: #d3c6b6;
-            --text-muted: #8b8075;
-            --accent-red: #c02626;
-            --accent-red-hover: #9e1a1a;
-            --accent-green: #4b6a4b;
-            --border-color: #2a2220;
+            --bg-color: #1a1a1a;
+            --sidebar-bg: #222222;
+            --panel-bg: rgba(30, 30, 30, 0.9);
+            --text-main: #e0d6c5;
+            --text-muted: #a09888;
+            --accent-red: #d43a3a;
+            --accent-red-hover: #b02a2a;
+            --accent-green: #5a8a5a;
+            --accent-orange: #d97a4a;
+            --accent-blue: #5599dd;
+            --border-color: #3a3230;
             --font-serif: 'Playfair Display', serif;
             --font-mono: 'Space Mono', monospace;
         }
@@ -39,25 +41,14 @@
             font-size: 14px;
         }
 
-        /* Sidebar */
-        .sidebar {
-            width: 260px;
-            background-color: var(--sidebar-bg);
-            border-right: 1px solid var(--border-color);
-            display: flex;
-            flex-direction: column;
-            padding: 30px 0;
-            z-index: 10;
-        }
-
-        /* ===== STEP FLOW ===== */
         /* ===== MODULE SELECTOR ===== */
         .module-selector {
             display: none;
             border: 1px solid var(--border-color);
+            border-top: none;
             background: rgba(0,0,0,0.3);
             padding: 15px;
-            margin-bottom: 15px;
+            flex-shrink: 0;
         }
         .module-selector.visible { display: block; }
         .module-category {
@@ -185,140 +176,186 @@
         .toast-info { background:rgba(30,30,30,0.95); color:var(--text-main); border-color:var(--text-muted); }
         @keyframes slideIn { from { transform:translateX(100%); opacity:0; } to { transform:translateX(0); opacity:1; } }
 
-        .logo-container {
-            text-align: center;
-            margin-bottom: 40px;
-        }
-
-        .logo-icon {
-            font-size: 24px;
-            color: var(--text-main);
-            margin-bottom: 10px;
-        }
-
-        .logo-text {
-            font-family: var(--font-serif);
-            font-size: 38px;
-            font-weight: 700;
-            line-height: 1;
-            letter-spacing: -1px;
-            color: var(--text-main);
-        }
-
-        .logo-subtext {
-            color: var(--accent-red);
-            font-size: 11px;
-            letter-spacing: 2px;
-            margin-top: 5px;
-            font-weight: 700;
-        }
-
-        .nav-menu {
-            list-style: none;
-            flex-grow: 1;
-        }
-
-        .nav-item {
-            padding: 12px 30px;
-            display: flex;
-            align-items: center;
-            gap: 15px;
-            color: var(--text-muted);
-            text-decoration: none;
-            transition: all 0.3s ease;
-            cursor: pointer;
-        }
-
-        .nav-item:hover {
-            color: var(--text-main);
-            background-color: rgba(255,255,255,0.02);
-        }
-
-        .nav-item.active {
-            background-color: var(--accent-red);
-            color: #fff;
-            border-radius: 4px;
-            margin: 0 15px;
-            padding: 12px 15px;
-        }
-
-        .nav-icon {
-            width: 20px;
-            text-align: center;
-            font-size: 16px;
-        }
-
-        .quote-box {
-            padding: 20px 30px;
-            border-top: 1px solid var(--border-color);
-            font-family: var(--font-serif);
-            font-style: italic;
-            color: var(--text-muted);
-            font-size: 13px;
-            line-height: 1.5;
-        }
-
-        .quote-author {
-            color: var(--accent-red);
-            text-align: right;
-            margin-top: 10px;
-            font-style: normal;
-            font-family: var(--font-mono);
-            font-size: 12px;
-        }
-
-        /* Main Content */
+        /* ===== CHAT LAYOUT ===== */
         .main-content {
-            flex-grow: 1;
-            position: relative;
             display: flex;
             flex-direction: column;
+            height: 100vh;
+            width: 100%;
+            overflow: hidden;
             background-color: var(--bg-color);
-            background-image: linear-gradient(rgba(10, 10, 12, 0.6), rgba(10, 10, 12, 0.65)), url('/static/bg.png');
-            background-size: cover;
-            background-position: left top, right center;
-            background-repeat: no-repeat, no-repeat;
-            overflow-y: auto;
-            padding-bottom: 80px; /* Espaço para o footer não sobrepor o conteúdo */
         }
 
-        .header {
-            padding: 50px;
+        .chat-top-bar {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 8px 16px;
+            background: var(--sidebar-bg);
+            border-bottom: 1px solid var(--border-color);
+            flex-shrink: 0;
+            z-index: 10;
         }
 
-        .main-title {
-            font-family: var(--font-serif);
-            font-size: 80px;
+        .chat-top-avatar {
+            height: 48px;
+            width: auto;
+            max-width: 120px;
+            border-radius: 6px;
+            border: 2px solid var(--accent-red);
+            object-fit: contain;
+            flex-shrink: 0;
+        }
+
+        .chat-title {
+            font-family: 'Orbitron', monospace;
+            font-size: 16px;
             font-weight: 700;
-            color: var(--text-main);
-            line-height: 1;
-            margin-bottom: 5px;
-            text-shadow: 2px 2px 10px rgba(0,0,0,0.8);
+            background: linear-gradient(135deg, var(--accent-red), var(--accent-orange, #d05c35));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            letter-spacing: 2px;
         }
 
-        .main-subtitle {
-            color: var(--accent-red);
-            font-size: 24px;
-            letter-spacing: 4px;
-            font-weight: 700;
-            margin-bottom: 15px;
-            text-shadow: 1px 1px 5px rgba(0,0,0,0.8);
-        }
-
-        .main-desc {
-            font-family: var(--font-serif);
-            font-size: 18px;
+        .chat-subtitle {
+            font-size: 9px;
             color: var(--text-muted);
-            text-shadow: 1px 1px 3px rgba(0,0,0,0.8);
+            letter-spacing: 3px;
+            text-transform: uppercase;
         }
 
-        /* Dashboard Grid */
-        .dashboard-grid {
-            margin-top: auto;
-            padding: 40px;
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-            gap: 25px;
+        .chat-spacer {
+            flex-grow: 1;
+        }
+
+        .chat-status {
+            font-size: 11px;
+            color: var(--text-muted);
+            font-family: var(--font-mono);
+        }
+
+        .chat-modules-btn {
+            background: rgba(229, 57, 53, 0.12);
+            border: 1px solid rgba(229, 57, 53, 0.2);
+            color: var(--accent-orange, #d05c35);
+            width: 36px;
+            height: 36px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 16px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
+        }
+
+        .chat-modules-btn:hover {
+            background: rgba(229, 57, 53, 0.25);
+        }
+
+        .chat-area {
+            flex-grow: 1;
+            overflow-y: auto;
+            padding: 16px 20px;
+            background: url('/static/bg.png') center / contain no-repeat fixed;
+            background-color: #1a1a1a;
+        }
+
+        .chat-logs {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+
+        .chat-msg {
+            display: flex;
+            align-items: flex-start;
+            gap: 8px;
+            padding: 4px 0;
+            font-family: var(--font-mono);
+            font-size: 12px;
+            line-height: 1.5;
+            animation: fadeInMsg 0.2s ease-out;
+        }
+
+        @keyframes fadeInMsg {
+            from { opacity: 0; transform: translateY(-4px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .chat-msg .chat-msg-icon {
+            flex-shrink: 0;
+            width: 16px;
+            text-align: center;
+            color: var(--accent-green);
+            font-size: 10px;
+        }
+
+        .chat-msg.system .chat-msg-text { color: var(--text-muted); }
+        .chat-msg.info .chat-msg-icon { color: var(--accent-blue, #4488cc); }
+        .chat-msg.info .chat-msg-text { color: var(--accent-blue, #4488cc); }
+        .chat-msg.success .chat-msg-icon { color: var(--accent-green); }
+        .chat-msg.success .chat-msg-text { color: var(--accent-green); }
+        .chat-msg.warn .chat-msg-icon { color: var(--accent-orange, #d05c35); }
+        .chat-msg.warn .chat-msg-text { color: var(--accent-orange, #d05c35); }
+        .chat-msg.error .chat-msg-icon { color: var(--accent-red); }
+        .chat-msg.error .chat-msg-text { color: var(--accent-red); }
+        .chat-msg.highlight .chat-msg-text { color: #fff; font-weight: 600; }
+
+        /* ===== RESULTS PANEL ===== */
+        .results-panel {
+            flex-shrink: 0;
+            border-top: 1px solid var(--border-color);
+            background: var(--panel-bg);
+            max-height: 50vh;
+            overflow-y: auto;
+            display: none;
+        }
+
+        .results-panel.open {
+            display: block;
+        }
+
+        .results-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px 20px;
+            cursor: pointer;
+            font-size: 12px;
+            font-weight: 600;
+            letter-spacing: 1px;
+            color: var(--text-muted);
+            background: rgba(255,255,255,0.02);
+            border-bottom: 1px solid var(--border-color);
+            user-select: none;
+        }
+
+        .results-header:hover {
+            background: rgba(255,255,255,0.04);
+        }
+
+        .results-toggle {
+            font-size: 10px;
+            transition: transform 0.2s;
+        }
+
+        .results-body {
+            padding: 16px 20px;
+        }
+
+        .findings-count {
+            background: rgba(229, 57, 53, 0.15);
+            color: var(--accent-orange, #d05c35);
+            font-size: 10px;
+            font-weight: 700;
+            padding: 2px 8px;
+            border-radius: 10px;
+            margin-left: 6px;
+        }
+
+        .results-findings {
+            margin-top: 12px;
         }
 
         .panel {
@@ -417,10 +454,6 @@
         .modal-section-title { color: var(--accent-red); font-size: 11px; letter-spacing: 1px; margin-bottom: 6px; }
         .modal-section-content { color: var(--text-main); font-size: 13px; line-height: 1.6; white-space: pre-wrap; font-family: var(--font-mono); background: rgba(0,0,0,0.3); padding: 12px; border-radius: 4px; border: 1px solid var(--border-color); }
 
-        /* Scans Panel */
-        .view-panel { display: none; }
-        .view-panel.active { display: block; }
-
         .finding-badge {
             display: inline-block;
             font-size: 9px;
@@ -461,38 +494,62 @@
 
         /* Footer / Terminal Bar */
         .footer {
-            position: fixed;
-            bottom: 0;
-            left: 260px; /* Largura da sidebar */
-            width: calc(100% - 260px);
-            height: 60px;
+            flex-shrink: 0;
+            height: 56px;
             background-color: var(--sidebar-bg);
             border-top: 1px solid var(--border-color);
             display: flex;
             align-items: center;
-            padding: 0 30px;
+            padding: 0 16px;
             z-index: 20;
-        }
-
-        .now-playing {
-            color: var(--accent-red);
-            font-size: 12px;
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            width: 230px; /* matches sidebar minus padding */
         }
 
         .terminal-input {
             flex-grow: 1;
-            padding-left: 20px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
             color: var(--accent-green);
-            font-size: 15px; /* Aumentado */
+            font-size: 14px;
         }
         
+        .terminal-input input {
+            flex-grow: 1;
+            background: transparent;
+            border: none;
+            outline: none;
+            color: var(--text-main);
+            font-family: var(--font-mono);
+            font-size: 14px;
+        }
+        
+        .terminal-input input::placeholder {
+            color: var(--text-muted);
+            opacity: 0.5;
+        }
+        
+        .terminal-input button {
+            background: var(--accent-red);
+            color: #fff;
+            border: none;
+            padding: 6px 16px;
+            font-family: var(--font-mono);
+            font-size: 12px;
+            font-weight: 700;
+            cursor: pointer;
+            letter-spacing: 1px;
+            border-radius: 4px;
+            transition: background 0.2s;
+        }
+        
+        .terminal-input button:hover {
+            background: var(--accent-red-hover);
+        }
+
         .terminal-prompt {
             color: var(--text-muted);
-            font-size: 15px; /* Aumentado */
+            font-size: 14px;
+            white-space: nowrap;
         }
 
         .terminal-cursor {
@@ -942,39 +999,16 @@
 </head>
 <body>
 
-    <aside class="sidebar">
-        <div class="logo-container">
-            <img src="/static/bg.png" alt="Jazz Noir" style="width:48px;height:48px;border-radius:50%;margin-bottom:8px;border:2px solid var(--accent-red);object-fit:cover;">
-            <div class="logo-text">Jazz Noir</div>
-            <div class="logo-subtext">— PENTEST SUITE —</div>
-        </div>
-
-        <nav class="nav-menu">
-            <a href="#" class="nav-item active" data-view="dashboard">
-                <i class="fa-solid fa-house nav-icon"></i>
-                <span>Dashboard</span>
-            </a>
-            <a href="#" class="nav-item" data-view="vulnerabilidades">
-                <i class="fa-solid fa-bug nav-icon"></i>
-                <span>Vulnerabilidades</span>
-            </a>
-            <a href="#" class="nav-item" id="nav-toggle-modules" onclick="toggleModuleSelector()">
-                <i class="fa-solid fa-cubes nav-icon"></i>
-                <span>Engines</span>
-                <span class="engine-count" id="engine-total-count-sidebar">0</span>
-            </a>
-        </nav>
-
-        <div class="quote-box">
-            "In security, as in jazz, timing is everything. Find the right note, own the system."
-            <div class="quote-author">- JazzNoir</div>
-        </div>
-    </aside>
-
     <main class="main-content">
-        <div class="header">
-            <h1 class="main-title">Jazz Noir</h1>
-            <div class="main-subtitle">— PENTEST SUITE —</div>
+        <div class="chat-top-bar">
+            <img src="/static/bg.png" alt="Jazz Noir" class="chat-top-avatar">
+            <span class="chat-title">Jazz Noir</span>
+            <span class="chat-subtitle">Pentest Suite</span>
+            <span class="chat-spacer"></span>
+            <span id="log-status" class="chat-status">Aguardando...</span>
+            <button class="chat-modules-btn" onclick="toggleModuleSelector()" title="Engines">
+                <i class="fa-solid fa-cubes"></i>
+            </button>
         </div>
 
         <!-- ===== MODULE SELECTOR ===== -->
@@ -990,10 +1024,35 @@
             </div>
         </div>
 
-        <div class="dashboard-grid">
+        <!-- ===== CHAT AREA ===== -->
+        <div class="chat-area" id="chat-area">
+            <div id="terminal-logs" class="chat-logs">
+                <div class="chat-msg system">
+                    <span class="chat-msg-icon">◆</span>
+                    <span class="chat-msg-text">Módulo Maryam carregado.</span>
+                </div>
+                <div class="chat-msg system">
+                    <span class="chat-msg-icon">◆</span>
+                    <span class="chat-msg-text">NeuralCore AI (BugHunter Engine) inicializada.</span>
+                </div>
+                <div class="chat-msg system">
+                    <span class="chat-msg-icon">◆</span>
+                    <span class="chat-msg-text">Módulo Wireless (Wifite2/hcxdumptool/hcxtools) pronto.</span>
+                </div>
+                <div class="chat-msg system">
+                    <span class="chat-msg-icon">◆</span>
+                    <span class="chat-msg-text">Pronta para iniciar o OSINT ou Wireless.</span>
+                </div>
+            </div>
+        </div>
 
-            <!-- ===== VIEW: DASHBOARD ===== -->
-            <div class="view-panel active" data-view="dashboard">
+        <!-- ===== RESULTS PANEL (collapsible) ===== -->
+        <div class="results-panel" id="results-panel">
+            <div class="results-header" onclick="toggleResults()">
+                <span>📊 RESULTADOS</span>
+                <span class="results-toggle" id="results-toggle">▼</span>
+            </div>
+            <div class="results-body" id="results-body">
                 <div class="risk-hero" id="risk-hero">
                     <div class="risk-hero-score" id="risk-hero-score">—</div>
                     <div class="risk-hero-label">RISK SCORE</div>
@@ -1008,23 +1067,19 @@
                     <div class="dash-stat-card"><span class="dash-stat-val" id="dash-findings">0</span><span class="dash-stat-label">Findings</span></div>
                 </div>
 
-                <!-- Summary Stats -->
-                <div class="panel" style="grid-column: span 2;">
-                    <div class="panel-title">SEVERITY DISTRIBUTION</div>
-                    <div class="stats-summary">
-                        <div class="stat-item"><span class="stat-label">Total</span><span class="stat-value val-total">0</span></div>
-                        <div class="stat-item crit"><span class="stat-label">Crítica</span><span class="stat-value val-critical">0</span></div>
-                        <div class="stat-item high"><span class="stat-label">Alta</span><span class="stat-value val-high">0</span></div>
-                        <div class="stat-item med"><span class="stat-label">Média</span><span class="stat-value val-medium">0</span></div>
-                        <div class="stat-item low"><span class="stat-label">Baixa</span><span class="stat-value val-low">0</span></div>
-                    </div>
-                    <div class="sev-bar" id="sev-dist-bar"></div>
+                <div class="panel-title" style="margin-bottom:10px;">SEVERITY DISTRIBUTION</div>
+                <div class="stats-summary">
+                    <div class="stat-item"><span class="stat-label">Total</span><span class="stat-value val-total">0</span></div>
+                    <div class="stat-item crit"><span class="stat-label">Crítica</span><span class="stat-value val-critical">0</span></div>
+                    <div class="stat-item high"><span class="stat-label">Alta</span><span class="stat-value val-high">0</span></div>
+                    <div class="stat-item med"><span class="stat-label">Média</span><span class="stat-value val-medium">0</span></div>
+                    <div class="stat-item low"><span class="stat-label">Baixa</span><span class="stat-value val-low">0</span></div>
                 </div>
+                <div class="sev-bar" id="sev-dist-bar"></div>
 
-                <!-- Findings list (dashboard) -->
-                <div class="panel" style="grid-column: 1 / -1;">
-                    <div class="panel-title" style="display:flex;justify-content:space-between;align-items:center;">
-                        <span>FINDINGS</span>
+                <div class="results-findings">
+                    <div class="panel-title" style="display:flex;justify-content:space-between;align-items:center;margin:12px 0 10px;">
+                        <span>FINDINGS <span class="findings-count" id="findings-count-badge">0</span></span>
                         <div class="filter-pills" id="filter-pills-dash">
                             <span class="filter-pill active" data-sev="all">Todas</span>
                             <span class="filter-pill pill-critica" data-sev="critica">Crítica</span>
@@ -1039,53 +1094,13 @@
                         <div style="color:var(--text-muted);font-size:12px;">Nenhum resultado ainda. Execute um pipeline.</div>
                     </div>
                 </div>
-
-            <!-- ===== VIEW: VULNERABILIDADES ===== -->
-            <div class="view-panel" data-view="vulnerabilidades">
-                <div class="panel" style="grid-column: span 2;">
-                    <div class="panel-title">VULNERABILIDADES ENCONTRADAS</div>
-                    <div style="font-size:11px; color:var(--text-muted); margin-bottom:10px;">Itens classificados como Critica, Alta ou Media pelo NeuralCore AI.</div>
-                    <div class="filter-pills" id="filter-pills-vuln">
-                        <span class="filter-pill active" data-sev="all">Todas</span>
-                        <span class="filter-pill pill-critica" data-sev="critica">Crítica</span>
-                        <span class="filter-pill pill-alta" data-sev="alta">Alta</span>
-                        <span class="filter-pill pill-media" data-sev="media">Média</span>
-                    </div>
-                    <div id="vuln-grouped-container">
-                        <div style="color:var(--text-muted); font-size:12px;">Nenhuma vulnerabilidade encontrada ainda.</div>
-                    </div>
-                </div>
             </div>
-
-            <div class="panel" style="grid-column: 1 / -1; height: 280px; display: flex; flex-direction: column;">
-                <div class="panel-title" style="display: flex; justify-content: space-between;">
-                    <span>TERMINAL / LIVE LOGS</span>
-                    <span id="log-status" style="color: var(--text-muted);">Aguardando...</span>
-                </div>
-                <div id="terminal-logs" style="
-                    flex-grow: 1; 
-                    background-color: #000; 
-                    border: 1px solid var(--border-color);
-                    padding: 15px; 
-                    font-family: var(--font-mono); 
-                    font-size: 12px; 
-                    color: var(--accent-green); 
-                    overflow-y: auto; 
-                    box-shadow: inset 0 0 10px rgba(0,0,0,0.8);
-                ">
-                    <div><span style="color:var(--text-muted)">[System]</span> Módulo Maryam carregado.</div>
-                    <div><span style="color:var(--text-muted)">[System]</span> NeuralCore AI (BugHunter Engine) inicializada.</div>
-                    <div><span style="color:var(--text-muted)">[System]</span> Módulo Wireless (Wifite2/hcxdumptool/hcxtools) pronto.</div>
-                    <div><span style="color:var(--text-muted)">[System]</span> Pronta para iniciar o OSINT ou Wireless.</div>
-                </div>
-            </div>
-
         </div>
 
         <!-- Toast notifications container -->
         <div class="toast-container" id="toast-container"></div>
 
-        <!-- Modal de Detalhes do Finding (MELHORADO) -->
+        <!-- Modal de Detalhes do Finding -->
         <div class="modal-overlay" id="finding-modal" onclick="if(event.target===this)closeFindingModal()">
             <div class="modal-box">
                 <button class="modal-close" onclick="closeFindingModal()">&times;</button>
@@ -1116,10 +1131,10 @@
         </div>
 
         <div class="footer">
-            <div class="terminal-input" style="display: flex; align-items: center; gap: 0;">
+            <div class="terminal-input">
                 <span class="terminal-prompt" id="rotating-prompt">root@darknet:~$</span> 
-                <input type="text" id="cmd-input" placeholder="ex: exemplo.com ou 192.168.1.1" autocomplete="off">
-                <button id="btn-scan-go" onclick="startScanWithTarget()" title="Iniciar scan no alvo digitado">
+                <input type="text" id="cmd-input" placeholder="Digite um alvo (ex: exemplo.com) ou /help para comandos" autocomplete="off">
+                <button id="btn-scan-go" onclick="startScanWithTarget(document.getElementById('cmd-input').value)" title="Iniciar scan">
                     <i class="fa-solid fa-crosshairs"></i> Scan
                 </button>
             </div>
@@ -1127,108 +1142,53 @@
     </main>
 
     <style>
-        /* Estilos adicionais para o input interativo */
-        #cmd-input {
-            background: rgba(255,255,255,0.03);
-            border: 1px solid var(--border-color);
-            border-left: none;
+        .terminal-input input {
+            background: transparent;
+            border: none;
+            outline: none;
             color: var(--text-main);
             font-family: var(--font-mono);
-            font-size: 15px;
+            font-size: 14px;
+            padding: 8px 0;
             flex-grow: 1;
-            margin-left: 0;
-            padding: 8px 12px;
+            min-width: 0;
+        }
+        .terminal-input input:focus {
             outline: none;
-            height: 40px;
-            border-radius: 0 4px 4px 0;
-            transition: border-color 0.3s, background 0.3s;
         }
-        #cmd-input:focus {
-            border-color: var(--accent-green);
-            background: rgba(75,106,75,0.05);
-        }
-        #cmd-input::placeholder {
+        .terminal-input input::placeholder {
             color: rgba(139, 128, 117, 0.5);
         }
-        #btn-scan-go {
+        .terminal-input button {
             background: var(--accent-red);
             color: #fff;
-            border: 1px solid var(--accent-red);
-            border-left: none;
-            padding: 8px 16px;
+            border: none;
+            padding: 6px 16px;
             font-family: var(--font-mono);
             font-size: 12px;
             font-weight: 700;
             cursor: pointer;
-            height: 40px;
-            border-radius: 0 4px 4px 0;
-            letter-spacing: 0.5px;
+            letter-spacing: 1px;
+            border-radius: 4px;
             transition: background 0.2s;
             white-space: nowrap;
             display: flex;
             align-items: center;
             gap: 6px;
         }
-        #btn-scan-go:hover {
+        .terminal-input button:hover {
             background: var(--accent-red-hover);
         }
-        #btn-scan-go i {
-            font-size: 11px;
-        }
         .terminal-prompt {
-            background: rgba(0,0,0,0.4);
-            border: 1px solid var(--border-color);
-            border-right: none;
-            padding: 8px 10px;
+            color: var(--text-muted);
+            font-size: 14px;
             white-space: nowrap;
+            opacity: 0.8;
         }
 
-        #rotating-prompt {
-            transition: opacity 0.4s ease;
-            white-space: nowrap;
-        }
     </style>
 
     <script>
-        // ===== PROMPT ROTATIVO MULTILÍNGUE =====
-        const rotatingPrompts = [
-            'root@darknet:~$',
-            'nenhum rastro deixado:~$',
-            'sombra na rede:~$',
-            'sem testemunhas:~$',
-            'conexão segura:~$',
-            'identidade oculta:~$',
-            'тень в сети:~$',
-            'без следов:~$',
-            'тишина перед атакой:~$',
-            'невидимка:~$',
-            'глубокая сеть:~$',
-            'kein Beweis:~$',
-            'unsichtbar:~$',
-            'tief im Netz:~$',
-            'spurlos verschwunden:~$',
-            'im Schatten:~$',
-            'no traces left:~$',
-            'ghost in the wire:~$',
-            'deep cover:~$',
-            'off the grid:~$',
-            'silent operator:~$',
-        ];
-
-        let promptIdx = 0;
-        const promptEl = document.getElementById('rotating-prompt');
-
-        function rotatePrompt() {
-            promptEl.style.opacity = '0';
-            setTimeout(() => {
-                promptIdx = (promptIdx + 1) % rotatingPrompts.length;
-                promptEl.textContent = rotatingPrompts[promptIdx];
-                promptEl.style.opacity = '1';
-            }, 400);
-        }
-
-        setInterval(rotatePrompt, 3500);
-
         // ===== TOAST NOTIFICATION =====
         function showToast(message, type) {
             type = type || 'info';
@@ -1370,6 +1330,31 @@
             }
             loadEngines();
 
+            // ===== CHAT MESSAGE HELPER =====
+            function addChatMessage(text, type = 'system') {
+                const logs = document.getElementById('terminal-logs');
+                const msg = document.createElement('div');
+                msg.className = `chat-msg ${type}`;
+                const icons = { system: '◆', info: 'ℹ', success: '✓', warn: '⚠', error: '✗', highlight: '▸' };
+                msg.innerHTML = `<span class="chat-msg-icon">${icons[type] || '◆'}</span><span class="chat-msg-text">${text}</span>`;
+                logs.appendChild(msg);
+                logs.scrollTop = logs.scrollHeight;
+            }
+
+            // ===== TOGGLE RESULTS PANEL =====
+            window.toggleResults = function() {
+                const panel = document.getElementById('results-panel');
+                const toggle = document.getElementById('results-toggle');
+                panel.classList.toggle('open');
+                toggle.textContent = panel.classList.contains('open') ? '▲' : '▼';
+            };
+
+            window.showResults = function() {
+                const panel = document.getElementById('results-panel');
+                panel.classList.add('open');
+                document.getElementById('results-toggle').textContent = '▲';
+            };
+
             function renderModuleSelector() {
                 const cats = {};
                 for (const e of allEngines) {
@@ -1460,26 +1445,20 @@
             }
 
             window.startScanWithTarget = async function(targetInput) {
-                const cmdInput = document.getElementById('cmd-input');
-                const target = (targetInput || cmdInput.value).trim();
+                const target = targetInput.trim();
                 if (!target) {
-                    cmdInput.focus();
-                    cmdInput.style.borderColor = '#c02626';
-                    setTimeout(() => cmdInput.style.borderColor = '', 1500);
+                    document.getElementById('cmd-input').focus();
                     return;
                 }
                 currentTarget = target;
-                cmdInput.value = '';
-                cmdInput.placeholder = 'Digite outro alvo ou clique "Alterar"...';
-                const terminal = document.getElementById('terminal-logs');
-                terminal.innerHTML += `<div><span style="color:var(--accent-green)">[Target]</span> Alvo definido: <b>${target}</b></div>`;
-                terminal.scrollTop = terminal.scrollHeight;
+                document.getElementById('cmd-input').placeholder = 'Digite outro alvo ou /help';
                 const status = document.getElementById('log-status');
+
+                addChatMessage(`Alvo definido: <b>${target}</b>`, 'success');
                 status.innerText = 'Iniciando pipeline...';
                 status.style.color = 'var(--accent-red)';
                 status.classList.add('scan-pulse');
-                terminal.innerHTML += `<div><span style="color:var(--text-main)">[${new Date().toLocaleTimeString()}]</span> Pipeline scan em: <b>${target}</b></div>`;
-                terminal.scrollTop = terminal.scrollHeight;
+
                 try {
                     const resp = await fetch('/api/pipeline', {
                         method: 'POST',
@@ -1488,7 +1467,7 @@
                     });
                     const data = await resp.json();
                     if (data.status !== 'started') {
-                        terminal.innerHTML += `<div><span style="color:#c02626">[ERROR]</span> Falha ao iniciar pipeline</div>`;
+                        addChatMessage('Falha ao iniciar pipeline', 'error');
                         status.innerText = 'Erro';
                         status.style.color = '#c02626';
                         status.classList.remove('scan-pulse');
@@ -1496,10 +1475,8 @@
                     }
                     const flowId = data.flow_id;
                     currentProjectId = data.project_id;
-                    terminal.innerHTML += `<div><span style="color:#8b8075">[+]</span> Pipeline iniciado — Flow #${flowId} | Projeto #${data.project_id}</div>`;
-                    terminal.scrollTop = terminal.scrollHeight;
+                    addChatMessage(`Pipeline iniciado — Flow #${flowId} | Projeto #${data.project_id}`, 'system');
 
-                    // Connect WebSocket for live events
                     const wsProto = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
                     const ws = new WebSocket(`${wsProto}//${window.location.host}/api/flows/${flowId}/ws`);
 
@@ -1509,54 +1486,47 @@
                             const ts = new Date(msg.ts * 1000).toLocaleTimeString();
                             switch (msg.type) {
                                 case 'progress':
-                                    terminal.innerHTML += `<div><span style="color:#8b8075">[${ts}]</span> ${msg.data.message}</div>`;
+                                    addChatMessage(`[${ts}] ${msg.data.message}`, 'system');
                                     break;
                                 case 'phase_start':
-                                    terminal.innerHTML += `<div><span style="color:var(--accent-red)">[${ts}]</span> <b>Fase: ${msg.data.phase}</b></div>`;
+                                    addChatMessage(`Fase: ${msg.data.phase}`, 'highlight');
                                     status.innerText = `${msg.data.phase}...`;
                                     break;
                                 case 'phase_end':
-                                    terminal.innerHTML += `<div><span style="color:var(--accent-green)">[${ts}]</span> Fase ${msg.data.phase} concluída (${msg.data.findings} findings)</div>`;
+                                    addChatMessage(`Fase ${msg.data.phase} concluída (${msg.data.findings} findings)`, 'success');
                                     break;
                                 case 'llm_call':
-                                    terminal.innerHTML += `<div style="font-size:11px;color:var(--text-muted)">[${ts}] LLM: ${msg.data.provider}/${msg.data.model} (${(msg.data.latency_ms/1000).toFixed(1)}s)</div>`;
+                                    addChatMessage(`LLM: ${msg.data.provider}/${msg.data.model} (${(msg.data.latency_ms/1000).toFixed(1)}s)`, 'info');
                                     break;
                                 case 'tool_call':
-                                    terminal.innerHTML += `<div style="font-size:11px;color:#ffcc44">[${ts}] Tool: ${msg.data.tool} → ${msg.data.target}</div>`;
+                                    addChatMessage(`Tool: ${msg.data.tool} → ${msg.data.target}`, 'warn');
                                     break;
                                 case 'finding':
-                                    terminal.innerHTML += `<div style="font-size:11px;color:#c02626">[${ts}] ${msg.data.severity}: ${msg.data.title}</div>`;
+                                    addChatMessage(`${msg.data.severity}: ${msg.data.title}`, 'error');
                                     break;
                                 case 'error':
-                                    terminal.innerHTML += `<div><span style="color:#c02626">[${ts} ERROR]</span> ${msg.data.error}</div>`;
+                                    addChatMessage(`[${ts} ERROR] ${msg.data.error}`, 'error');
                                     break;
                                 case 'complete':
-                                    terminal.innerHTML += `<div><span style="color:#4b6a4b">[${ts} SUCCESS]</span> Pipeline concluído! ${msg.data.findings_count} findings.</div>`;
+                                    addChatMessage(`Pipeline concluído! ${msg.data.findings_count} findings.`, 'success');
                                     status.innerText = 'Pipeline concluído';
                                     status.style.color = 'var(--text-muted)';
                                     status.classList.remove('scan-pulse');
-                                    // Fetch final results
                                     fetchFlowResults(flowId);
                                     break;
                             }
-                            terminal.scrollTop = terminal.scrollHeight;
                         } catch(e) {
                             console.error('WS parse error:', e);
                         }
                     };
 
                     ws.onerror = function() {
-                        terminal.innerHTML += `<div><span style="color:#ffcc44">[WARN]</span> WebSocket desconectado — continuando em polling</div>`;
-                        // Fallback: poll for flow completion
+                        addChatMessage('WebSocket desconectado — continuando em polling', 'warn');
                         pollFlowResults(flowId);
-                    };
-
-                    ws.onclose = function() {
-                        // If not yet complete, start polling
                     };
                 } catch (err) {
                     console.error(err);
-                    terminal.innerHTML += `<div><span style="color:#c02626">[ERROR]</span> ${err.message}</div>`;
+                    addChatMessage(err.message, 'error');
                     status.innerText = 'Erro';
                     status.style.color = '#c02626';
                     status.classList.remove('scan-pulse');
@@ -1571,7 +1541,7 @@
                     updatePipelineDashboard(data);
                     fetchFindingsStats();
                     fetchGroupedFindings(currentDashFilter, 'findings-grouped-container', false);
-                    fetchGroupedFindings(currentVulnFilter, 'vuln-grouped-container', true);
+                    showResults();
                 } catch(e) {
                     console.error('Error fetching flow results:', e);
                 }
@@ -1579,7 +1549,6 @@
 
             let pollTimer = null;
             async function pollFlowResults(flowId) {
-                const terminal = document.getElementById('terminal-logs');
                 const check = async () => {
                     try {
                         const resp = await fetch(`/api/flows/${flowId}`);
@@ -1589,10 +1558,10 @@
                             if (pollTimer) { clearInterval(pollTimer); pollTimer = null; }
                             const statusEl = document.getElementById('log-status');
                             if (data.status === 'completed') {
-                                terminal.innerHTML += `<div><span style="color:#4b6a4b">[SUCCESS]</span> Pipeline concluído! (poll)</div>`;
+                                addChatMessage('Pipeline concluído! (poll)', 'success');
                                 statusEl.innerText = 'Pipeline concluído';
                             } else {
-                                terminal.innerHTML += `<div><span style="color:#c02626">[ERROR]</span> Pipeline falhou</div>`;
+                                addChatMessage('Pipeline falhou', 'error');
                                 statusEl.innerText = 'Erro';
                             }
                             statusEl.style.color = 'var(--text-muted)';
@@ -1600,9 +1569,8 @@
                             updatePipelineDashboard(data);
                             fetchFindingsStats();
                             fetchGroupedFindings(currentDashFilter, 'findings-grouped-container', false);
-                            fetchGroupedFindings(currentVulnFilter, 'vuln-grouped-container', true);
+                            showResults();
                         }
-                        terminal.scrollTop = terminal.scrollHeight;
                     } catch(e) { console.error('Poll error:', e); }
                 };
                 pollTimer = setInterval(check, 2000);
@@ -1611,13 +1579,11 @@
 
             window.startScanWithModules = async function() {
                 if (!currentTarget || selectedModules.size === 0) return;
-                const terminal = document.getElementById('terminal-logs');
                 const status = document.getElementById('log-status');
-                    status.innerText = 'Iniciando scan...';
-                    status.style.color = 'var(--accent-red)';
-                    status.classList.add('scan-pulse');
-                terminal.innerHTML += `<div><span style="color:var(--text-main)">[${new Date().toLocaleTimeString()}]</span> Iniciando scan em: <b>${currentTarget}</b> com ${selectedModules.size} módulos</div>`;
-                terminal.scrollTop = terminal.scrollHeight;
+                status.innerText = 'Iniciando scan...';
+                status.style.color = 'var(--accent-red)';
+                status.classList.add('scan-pulse');
+                addChatMessage(`Iniciando scan em: <b>${currentTarget}</b> com ${selectedModules.size} módulos`, 'highlight');
 
                 const enginesList = Array.from(selectedModules);
                 document.querySelector('.module-actions').innerHTML = '<div style="color:var(--accent-green);font-size:11px;"><i class="fa-solid fa-spinner fa-spin"></i> Scan em andamento...</div>';
@@ -1629,292 +1595,82 @@
                         body: JSON.stringify({ target: currentTarget, engines: enginesList })
                     });
                     const data = await resp.json();
-                    terminal.innerHTML += `<div><span style="color:#8b8075">[+]</span> ${data.dispatched}/${data.total} módulos disparados</div>`;
+                    addChatMessage(`${data.dispatched}/${data.total} módulos disparados`, 'system');
                     for (const r of data.engines) {
-                        const icon = r.status === 'dispatched' ? '<span style="color:#4b6a4b">✓</span>' : '<span style="color:#c02626">✗</span>';
+                        const icon = r.status === 'dispatched' ? '✓' : '✗';
                         const reason = r.error || r.reason || '';
-                        const taskInfo = r.task_id ? `<span style="color:var(--text-muted);font-size:9px;"> [${r.task_id.slice(0,8)}]</span>` : '';
-                        terminal.innerHTML += `<div style="font-size:11px;">${icon} <b>${r.engine}</b> — ${r.status} ${taskInfo} ${reason ? '('+reason+')' : ''}</div>`;
+                        addChatMessage(`${icon} <b>${r.engine}</b> — ${r.status}${reason ? ' ('+reason+')' : ''}`, r.status === 'dispatched' ? 'success' : 'error');
                     }
-                    terminal.scrollTop = terminal.scrollHeight;
                     status.innerText = 'Scan em execução...';
                     setTimeout(() => {
-                        terminal.innerHTML += `<div><span style="color:#4b6a4b">[SUCCESS]</span> Scan concluído! Painel atualizado.</div>`;
-                        terminal.scrollTop = terminal.scrollHeight;
+                        addChatMessage('Scan concluído! Painel atualizado.', 'success');
                         status.innerText = 'Pronto';
                         status.style.color = 'var(--text-muted)';
                         status.classList.remove('scan-pulse');
                         fetchFindingsStats();
                         fetchGroupedFindings(currentDashFilter, 'findings-grouped-container', false);
-                        fetchGroupedFindings(currentVulnFilter, 'vuln-grouped-container', true);
+                        showResults();
                     }, 3000);
                 } catch (err) {
                     console.error(err);
-                    terminal.innerHTML += `<div><span style="color:#c02626">[ERROR]</span> ${err.message}</div>`;
+                    addChatMessage(err.message, 'error');
                     status.innerText = 'Erro';
                     status.style.color = '#c02626';
                 }
             };
 
+            // ===== COMMAND HANDLER =====
             cmdInput.addEventListener('keydown', async (e) => {
-                if (e.key === 'Enter') {
-                    e.preventDefault();
-                    const command = cmdInput.value.trim();
-                    if (!command) {
-                        cmdInput.style.borderColor = '#c02626';
-                        setTimeout(() => cmdInput.style.borderColor = '', 1500);
-                        return;
-                    }
-                    // Se for comando conhecido, deixa o fluxo normal
-                    const knownEngines = ["fullscan", "full", "scan", "dork", "e4gl30s1nt", "e4gl30", "mrholmes", "wireless", "capture"];
-                    const firstWord = command.split(" ")[0];
-                    const isKnownCmd = knownEngines.some(e => firstWord.startsWith(e));
-                    if (!isKnownCmd) {
-                        // Single target direct scan
-                        window.startScanWithTarget(command);
-                        return;
-                    }
-                    // Comandos complexos continuam no fluxo existente
-                    let target = "desconhecido";
-                    if (command.includes("--target")) {
-                        const parts = command.split("--target");
-                        if (parts.length > 1) {
-                            target = parts[1].trim().split(" ")[0];
-                        }
-                    } else if (command.split(" ").length > 1) {
-                        target = command.split(" ")[1];
-                    }
+                if (e.key !== 'Enter') return;
+                e.preventDefault();
+                const raw = cmdInput.value.trim();
+                if (!raw) {
+                    cmdInput.style.borderColor = '#c02626';
+                    setTimeout(() => cmdInput.style.borderColor = '', 1500);
+                    return;
+                }
+                cmdInput.value = '';
+                const cmd = raw.toLowerCase();
 
-                    // Desabilitar enquanto carrega
-                    cmdInput.disabled = true;
-                    cmdInput.style.opacity = '0.5';
-
-                    const terminal = document.getElementById('terminal-logs');
-                    const status = document.getElementById('log-status');
-
-                    try {
-                        // --- COMANDO WIRELESS ---
-                        if (command.startsWith("wireless scan")) {
-                            status.innerText = "Escaneando redes...";
-                            status.style.color = "var(--accent-red)";
-
-                            terminal.innerHTML += `<div><span style="color:var(--text-main)">[${new Date().toLocaleTimeString()}]</span> Iniciando varredura wireless com Wifite2...</div>`;
-                            terminal.scrollTop = terminal.scrollHeight;
-
-                            const resp = await fetch('/api/wireless/scan', {
-                                method: 'POST',
-                                headers: { 'Content-Type': 'application/json' },
-                                body: JSON.stringify({ interface: 'wlan0' })
-                            });
-                            const data = await resp.json();
-
-                            terminal.innerHTML += `<div><span style="color:#8b8075">[+]</span> Scan ID: ${data.scan_id} | Task: ${data.task_id}</div>`;
-                            terminal.scrollTop = terminal.scrollHeight;
-
-                            setTimeout(() => {
-                                terminal.innerHTML += `<div><span style="color:#8b8075">[+]</span> Wifite2 escaneando canais em busca de redes...</div>`;
-                                terminal.scrollTop = terminal.scrollHeight;
-                            }, 2000);
-                            setTimeout(() => {
-                                terminal.innerHTML += `<div><span style="color:#4b6a4b">[SUCCESS]</span> Scan concluído. Redes salvas no banco.</div>`;
-                                terminal.scrollTop = terminal.scrollHeight;
-                                status.innerText = "Pronto";
-                                status.style.color = "var(--text-muted)";
-                            }, 5000);
-
-                        // --- COMANDO WIRELESS CAPTURE ---
-                        } else if (command.startsWith("wireless capture") || command.startsWith("capture")) {
-                            const bssid = command.split(" ").pop();
-                            status.innerText = "Capturando...";
-                            status.style.color = "var(--accent-red)";
-
-                            terminal.innerHTML += `<div><span style="color:var(--text-main)">[${new Date().toLocaleTimeString()}]</span> Iniciando captura PMKID/Handshake para ${bssid}...</div>`;
-                            terminal.scrollTop = terminal.scrollHeight;
-
-                            const resp = await fetch('/api/wireless/capture', {
-                                method: 'POST',
-                                headers: { 'Content-Type': 'application/json' },
-                                body: JSON.stringify({ interface: 'wlan0', bssid: bssid, channel: 6 })
-                            });
-                            const capData = await resp.json();
-
-                            terminal.innerHTML += `<div><span style="color:#8b8075">[+]</span> Task ID: ${capData.task_id}</div>`;
-                            terminal.scrollTop = terminal.scrollHeight;
-
-                            setTimeout(() => {
-                                terminal.innerHTML += `<div><span style="color:#8b8075">[+]</span> hcxdumptool capturando PMKID do alvo...</div>`;
-                                terminal.scrollTop = terminal.scrollHeight;
-                            }, 3000);
-                            setTimeout(() => {
-                                terminal.innerHTML += `<div><span style="color:#8b8075">[+]</span> hcxtools convertendo hash para formato 22000...</div>`;
-                                terminal.scrollTop = terminal.scrollHeight;
-                            }, 6000);
-                            setTimeout(() => {
-                                terminal.innerHTML += `<div><span style="color:#4b6a4b">[SUCCESS]</span> Hash armazenado no banco para quebra offline.</div>`;
-                                terminal.scrollTop = terminal.scrollHeight;
-                                status.innerText = "Pronto";
-                                status.style.color = "var(--text-muted)";
-                            }, 9000);
-
-                        } else if (command.startsWith("fullscan") || command.startsWith("full ")) {
-                            currentTarget = target;
-                            status.innerText = "Varredura completa...";
-                            status.style.color = "var(--accent-red)";
-
-                            const engTarget = command.split(" ").slice(1).join(" ") || target;
-                            terminal.innerHTML += `<div><span style="color:var(--text-main)">[${new Date().toLocaleTimeString()}]</span> Iniciando FULL SCAN em: <b>${engTarget}</b></div>`;
-                            terminal.innerHTML += `<div><span style="color:#8b8075">[+]</span> Engines: Maryam + E4GL30S1NT + Mr.Holmes + INURLBR</div>`;
-                            terminal.scrollTop = terminal.scrollHeight;
-
-                            const resp = await fetch('/api/scan', {
-                                method: 'POST',
-                                headers: { 'Content-Type': 'application/json' },
-                                body: JSON.stringify({ target: engTarget, command: 'fullscan ' + engTarget })
-                            });
-                            const data = await resp.json();
-
-                            terminal.innerHTML += `<div><span style="color:#8b8075">[+]</span> Task: ${data.task_id}</div>`;
-                            terminal.scrollTop = terminal.scrollHeight;
-
-                            const steps = [
-                                [2000, "Maryam: coletando subdominios e DNS..."],
-                                [5000, "E4GL30S1NT: varredura OSINT completa..."],
-                                [8000, "Mr.Holmes: recon de DNS e subdominios..."],
-                                [11000, "INURLBR: dorking com banco de 7548 strings..."],
-                                [14000, "NeuralCore AI: analisando lote de achados..."],
-                                [17000, "Relatorios sendo gerados..."],
-                            ];
-                            steps.forEach(([delay, msg]) => {
-                                setTimeout(() => {
-                                    terminal.innerHTML += `<div><span style="color:#8b8075">[+]</span> ${msg}</div>`;
-                                    terminal.scrollTop = terminal.scrollHeight;
-                                }, delay);
-                            });
-
-                            setTimeout(() => {
-                                terminal.innerHTML += `<div><span style="color:#4b6a4b">[SUCCESS]</span> Full scan concluido! Painel atualizado.</div>`;
-                                terminal.scrollTop = terminal.scrollHeight;
-                                status.innerText = "Pronto";
-                                status.style.color = "var(--text-muted)";
-                                fetchFindingsStats();
-                                fetchGroupedFindings(currentDashFilter, 'findings-grouped-container', false);
-                                fetchGroupedFindings(currentVulnFilter, 'vuln-grouped-container', true);
-                            }, 20000);
-
-                        } else if (command.startsWith("e4gl30s1nt") || command.startsWith("e4gl30") || command.startsWith("mrholmes")) {
-                            const engine = command.split(" ")[0];
-                            const engTarget = command.split(" ")[1] || target;
-                            status.innerText = `Executando ${engine}...`;
-                            status.style.color = "var(--accent-red)";
-
-                            terminal.innerHTML += `<div><span style="color:var(--text-main)">[${new Date().toLocaleTimeString()}]</span> ${engine} em: <b>${engTarget}</b></div>`;
-                            terminal.scrollTop = terminal.scrollHeight;
-
-                            const resp = await fetch('/api/scan', {
-                                method: 'POST',
-                                headers: { 'Content-Type': 'application/json' },
-                                body: JSON.stringify({ target: engTarget, command: command })
-                            });
-                            const data = await resp.json();
-
-                            terminal.innerHTML += `<div><span style="color:#8b8075">[+]</span> Task disparada: ${data.task_id || data.message}</div>`;
-                            terminal.scrollTop = terminal.scrollHeight;
-
-                            setTimeout(() => {
-                                terminal.innerHTML += `<div><span style="color:#4b6a4b">[SUCCESS]</span> ${engine} concluido. Dados enviados ao Claude-BugHunter.</div>`;
-                                terminal.scrollTop = terminal.scrollHeight;
-                                status.innerText = "Pronto";
-                                status.style.color = "var(--text-muted)";
-                                fetchFindingsStats();
-                                fetchGroupedFindings(currentDashFilter, 'findings-grouped-container', false);
-                                fetchGroupedFindings(currentVulnFilter, 'vuln-grouped-container', true);
-                            }, 5000);
-                            
-                        } else {
-                            const response = await fetch('/api/scan', {
-                                method: 'POST',
-                                headers: { 'Content-Type': 'application/json' },
-                                body: JSON.stringify({ target: target, command: command })
-                            });
-                            
-                            const responseData = await response.json();
-                            
-                            if (responseData.type === "dork") {
-                                status.innerText = "Executando INURLBR...";
-                                status.style.color = "var(--accent-red)";
-                                
-                                terminal.innerHTML += `<div><span style="color:var(--text-main)">[${new Date().toLocaleTimeString()}]</span> Iniciando Dorking no Google. Alvo de busca: <b>${responseData.target}</b></div>`;
-                                terminal.scrollTop = terminal.scrollHeight;
-                                
-                                setTimeout(() => {
-                                    terminal.innerHTML += `<div><span style="color:#8b8075">[+]</span> Carregando strings do banco de dados (sqli, senhas, etc)...</div>`;
-                                    terminal.scrollTop = terminal.scrollHeight;
-                                }, 1000);
-                                
-                                setTimeout(() => {
-                                    terminal.innerHTML += `<div><span style="color:#8b8075">[+]</span> Contornando proteções e executando buscas avançadas via INURLBR...</div>`;
-                                    terminal.scrollTop = terminal.scrollHeight;
-                                }, 2500);
-                                
-                                setTimeout(() => {
-                                    terminal.innerHTML += `<div><span style="color:#4b6a4b">[SUCCESS]</span> INURLBR Finalizou. URLs suspeitas enviadas ao Claude-BugHunter!</div>`;
-                                    terminal.scrollTop = terminal.scrollHeight;
-                                }, 4000);
-                            } else {
-                                status.innerText = "Executando OSINT...";
-                                status.style.color = "var(--accent-red)";
-                                
-                                terminal.innerHTML += `<div><span style="color:var(--text-main)">[${new Date().toLocaleTimeString()}]</span> Iniciando varredura OSINT em: <b>${responseData.target}</b></div>`;
-                                terminal.scrollTop = terminal.scrollHeight;
-                                
-                                setTimeout(() => {
-                                    terminal.innerHTML += `<div><span style="color:#8b8075">[+]</span> Buscando DNS e Subdomínios em base de dados OTX/Sectrails...</div>`;
-                                    terminal.scrollTop = terminal.scrollHeight;
-                                }, 1000);
-                                
-                                setTimeout(() => {
-                                    terminal.innerHTML += `<div><span style="color:#8b8075">[+]</span> Fazendo Dorking no Bing para vazamentos de Email corporativos...</div>`;
-                                    terminal.scrollTop = terminal.scrollHeight;
-                                }, 2500);
-                                
-                                setTimeout(() => {
-                                    terminal.innerHTML += `<div><span style="color:#4b6a4b">[SUCCESS]</span> Maryam Finalizou coleta. Dados enviados ao Claude-BugHunter para análise.</div>`;
-                                    terminal.scrollTop = terminal.scrollHeight;
-                                }, 4000);
-                            }
-                            
-                            setTimeout(() => {
-                                terminal.innerHTML += `<div><span style="color:#d09c35">[NeuralCore AI]</span> Analisando lote de achados com BugHunter Engine...</div>`;
-                                terminal.scrollTop = terminal.scrollHeight;
-                            }, 5000);
-                            
-                            setTimeout(() => {
-                                terminal.innerHTML += `<div><span style="color:var(--accent-red)">[NeuralCore AI]</span> Análise concluída! Painel de Resumo será atualizado.</div>`;
-                                terminal.scrollTop = terminal.scrollHeight;
-                                
-                                status.innerText = "Pronto";
-                                status.style.color = "var(--text-muted)";
-                                fetchFindingsStats();
-                                fetchGroupedFindings(currentDashFilter, 'findings-grouped-container', false);
-                                fetchGroupedFindings(currentVulnFilter, 'vuln-grouped-container', true);
-                            }, 8000);
-                        }
-
-                    } catch (err) {
-                        console.error(err);
-                        alert("Erro ao contatar o servidor. Verifique se o Flask está rodando.");
-                    } finally {
-                        cmdInput.value = '';
-                        cmdInput.disabled = false;
-                        cmdInput.style.opacity = '1';
-                        cmdInput.focus();
+                // Slash commands
+                if (cmd.startsWith('/')) {
+                    switch (cmd) {
+                        case '/help':
+                            addChatMessage('Comandos disponíveis:', 'highlight');
+                            addChatMessage('/help    — Exibe esta ajuda', 'info');
+                            addChatMessage('/results — Abre o painel de resultados', 'info');
+                            addChatMessage('/engines — Abre o seletor de módulos', 'info');
+                            addChatMessage('/clear   — Limpa o terminal', 'info');
+                            addChatMessage('Digite um domínio (ex: exemplo.com) para iniciar um scan pipeline completo.', 'system');
+                            addChatMessage('Use o botão <i class="fa-solid fa-cubes"></i> no topo para selecionar módulos específicos.', 'system');
+                            return;
+                        case '/results':
+                            addChatMessage('Abrindo painel de resultados...', 'info');
+                            showResults();
+                            fetchFindingsStats();
+                            fetchGroupedFindings(currentDashFilter, 'findings-grouped-container', false);
+                            return;
+                        case '/engines':
+                            addChatMessage('Abrindo seletor de módulos...', 'info');
+                            toggleModuleSelector();
+                            return;
+                        case '/clear':
+                            document.getElementById('terminal-logs').innerHTML = '';
+                            addChatMessage('Terminal limpo.', 'system');
+                            return;
+                        default:
+                            addChatMessage(`Comando desconhecido: ${raw}`, 'error');
+                            addChatMessage('Digite /help para ver os comandos disponíveis.', 'system');
+                            return;
                     }
                 }
+
+                // Treat as target → start pipeline
+                window.startScanWithTarget(raw);
             });
 
             // ===== FUNÇÕES DE FILTRO =====
             let currentDashFilter = 'all';
-            let currentVulnFilter = 'all';
             let currentProjectId = null;
             let hideInfo = false;
 
@@ -2194,19 +1950,6 @@
                 }
             });
 
-            // ===== NAVEGAÇÃO =====
-            document.querySelectorAll('.nav-item').forEach(item => {
-                item.addEventListener('click', function(e) {
-                    e.preventDefault();
-                    document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
-                    this.classList.add('active');
-                    const view = this.dataset.view || 'dashboard';
-                    document.querySelectorAll('.view-panel').forEach(p => {
-                        p.classList.toggle('active', p.dataset.view === view);
-                    });
-                });
-            });
-
             // ===== INFO TOGGLE =====
             const infoToggle = document.getElementById('info-toggle-dash');
             if (infoToggle) {
@@ -2228,22 +1971,12 @@
                     fetchGroupedFindings(sev, 'findings-grouped-container', false);
                 });
             }
-            const vulnPills = document.getElementById('filter-pills-vuln');
-            if (vulnPills) {
-                setupFilterPills('filter-pills-vuln', (sev) => {
-                    currentVulnFilter = sev;
-                    fetchGroupedFindings(sev, 'vuln-grouped-container', true);
-                });
-            }
-
             // ===== INIT =====
             fetchFindingsStats();
-            fetchGroupedFindings('all', 'vuln-grouped-container', true);
             
             setInterval(() => {
                 fetchFindingsStats();
-                fetchGroupedFindings(currentVulnFilter, 'vuln-grouped-container', true);
-            }, 5000);
+            }, 10000);
         });
     </script>
 </body>

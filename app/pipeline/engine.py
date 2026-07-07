@@ -4,7 +4,7 @@ import os
 import sqlite3
 from collections import defaultdict
 from datetime import datetime
-from typing import Optional
+from typing import List, Optional
 
 from app.events import get_stream_manager
 
@@ -167,6 +167,18 @@ class PipelineContext:
             self.risk_scores.update(prev.risk_scores)
         if prev.nist_csf:
             self.nist_csf.update(prev.nist_csf)
+        if prev.ai_analysis:
+            self.ai_analysis.update(prev.ai_analysis)
+        if prev.ai_report:
+            self.ai_report = prev.ai_report
+        if prev.exploitation_guide:
+            self.exploitation_guide = prev.exploitation_guide
+        if prev.tools_selected:
+            self.tools_selected = prev.tools_selected
+        if hasattr(prev, "grounded_findings") and prev.grounded_findings:
+            self.grounded_findings = prev.grounded_findings
+        if hasattr(prev, "hallucination_risk") and prev.hallucination_risk:
+            self.hallucination_risk = prev.hallucination_risk
 
 
 class PipelinePhase:
@@ -176,6 +188,27 @@ class PipelinePhase:
 
     async def run(self, ctx: PipelineContext) -> PipelineContext:
         raise NotImplementedError
+
+
+class Coordinator:
+    def __init__(self, phases: List[PipelinePhase], flow_id: int = 0):
+        self.phases = phases
+        self.flow_id = flow_id
+
+    async def decide(self, ctx: PipelineContext) -> List[PipelinePhase]:
+        ctx.append_progress("[Coordinator] Avaliando contexto para decidir fases", phase="coordinator")
+        active = []
+        for phase in self.phases:
+            active.append(phase)
+        ctx.append_progress(f"[Coordinator] {len(active)} fases selecionadas", phase="coordinator")
+        return active
+
+    async def validate_results(self, ctx: PipelineContext, phase_name: str, results_exception: Optional[Exception] = None) -> bool:
+        if results_exception:
+            ctx.append_progress(f"[Validator] Fase {phase_name} falhou: {results_exception}", phase="validator")
+            return False
+        ctx.append_progress(f"[Validator] Fase {phase_name} validada ({len(ctx.findings)} findings)", phase="validator")
+        return True
 
 
 class Pipeline:
@@ -193,12 +226,19 @@ class Pipeline:
 
         from app.ai.scope_validator import ScopeValidator
         from app.ai.execution_monitor import ExecutionMonitor
+        from app.ai.validation_gate import ValidationGate
+        from app.ai.grounded_agent import GroundedPipeline
+
         combined.scope_validator = ScopeValidator.from_target(target)
         combined.execution_monitor = ExecutionMonitor.from_env()
 
         scope_check = combined.scope_validator.is_target_allowed(target)
         if not scope_check[0]:
             raise PermissionError(f"Target fora do escopo: {scope_check[1]}")
+
+        coordinator = Coordinator(self.phases, flow_id=flow_id)
+        validation_gate = ValidationGate()
+        grounded_pipeline = GroundedPipeline()
 
         start_iteration = 1
         start_phase_idx = 0
@@ -230,41 +270,83 @@ class Pipeline:
                 ctx.append_progress(f"Inicio da iteracao {iteration}/{max_iterations}")
                 ctx.merge_previous_state(combined)
 
+            # Coordinator decides which phases to run
+            phases_to_run = await coordinator.decide(ctx)
+            phases_to_run = phases_to_run[phase_start:]
+
+            # Group phases by parallel_group for concurrent execution
             groups = defaultdict(list)
-            for phase in self.phases[phase_start:]:
+            for phase in phases_to_run:
                 groups[phase.parallel_group].append(phase)
 
             for group_id in sorted(groups):
                 phases_in_group = groups[group_id]
+
                 for p in phases_in_group:
                     if flow_id:
                         get_stream_manager().emit_phase_start(flow_id, p.name)
-                    ctx.append_progress(f"Iniciando fase: {p.name}", phase=p.name)
+                    ctx.append_progress(f"[Executor] Iniciando fase: {p.name}", phase=p.name)
+
                 if len(phases_in_group) == 1:
-                    ctx = await phases_in_group[0].run(ctx)
-                    save_checkpoint(ctx, phases_in_group[0].name)
-                    ctx.append_progress(f"Fase {phases_in_group[0].name} concluida ({len(ctx.findings)} findings)")
-                    if flow_id:
-                        get_stream_manager().emit_phase_end(flow_id, phases_in_group[0].name, findings=len(ctx.findings))
+                    phase = phases_in_group[0]
+                    try:
+                        result_ctx = await phase.run(ctx)
+                        valid = await coordinator.validate_results(result_ctx, phase.name)
+                        if valid:
+                            ctx = result_ctx
+                            save_checkpoint(ctx, phase.name)
+                            # Apply 7-Question Gate to new findings
+                            gate_results = validation_gate.batch_evaluate(ctx.findings)
+                            ctx.findings = [
+                                f for i, f in enumerate(ctx.findings)
+                                if gate_results[i]["gate_passed"]
+                            ]
+                        ctx.append_progress(
+                            f"[Executor] Fase {phase.name} concluida ({len(ctx.findings)} findings)",
+                            phase=phase.name
+                        )
+                        if flow_id:
+                            get_stream_manager().emit_phase_end(flow_id, phase.name, findings=len(ctx.findings))
+                    except Exception as e:
+                        await coordinator.validate_results(ctx, phase.name, e)
+                        ctx.append_progress(f"[Executor] Fase {phase.name} falhou: {e}", phase=phase.name)
+                        if flow_id:
+                            get_stream_manager().emit_phase_end(flow_id, phase.name, status="failed")
                 else:
-                    results = await asyncio.gather(*[p.run(PipelineContext(target, project_id, flow_id=flow_id)) for p in phases_in_group], return_exceptions=True)
+                    results = await asyncio.gather(
+                        *[p.run(PipelineContext(target, project_id, flow_id=flow_id)) for p in phases_in_group],
+                        return_exceptions=True
+                    )
                     for phase, result in zip(phases_in_group, results):
                         if isinstance(result, Exception):
-                            ctx.append_progress(f"Fase {phase.name} falhou: {result}")
+                            await coordinator.validate_results(ctx, phase.name, result)
+                            ctx.append_progress(f"[Executor] Fase {phase.name} falhou: {result}", phase=phase.name)
                             if flow_id:
                                 get_stream_manager().emit_phase_end(flow_id, phase.name, status="failed")
                         else:
+                            await coordinator.validate_results(result, phase.name)
                             ctx.merge_previous_state(result)
                             save_checkpoint(result, phase.name)
-                            ctx.append_progress(f"Fase {phase.name} concluida ({len(result.findings)} findings)")
+                            gate_results = validation_gate.batch_evaluate(result.findings)
+                            result.findings = [
+                                f for i, f in enumerate(result.findings)
+                                if gate_results[i]["gate_passed"]
+                            ]
+                            ctx.append_progress(
+                                f"[Executor] Fase {phase.name} concluida ({len(result.findings)} findings)",
+                                phase=phase.name
+                            )
                             if flow_id:
                                 get_stream_manager().emit_phase_end(flow_id, phase.name, findings=len(result.findings))
+
+            # Apply GroundedPipeline validation + confidence scoring after all phases
+            grounded_pipeline.process(ctx)
 
             combined.merge_previous_state(ctx)
 
             if iteration < max_iterations:
                 combined.append_progress(
-                    f"Iteracao {iteration} concluida: "
+                    f"[Coordinator] Iteracao {iteration} concluida: "
                     f"{len(combined.findings)} findings, "
                     f"{len(combined.cves)} CVEs, "
                     f"{len(combined.technologies)} tecnologias"

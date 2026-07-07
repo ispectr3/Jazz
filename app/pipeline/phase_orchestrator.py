@@ -96,32 +96,30 @@ class OrchestratorPhase(PipelinePhase):
         # 1. Decide which tools to run based on target context
         tools_to_run = self._decide_tools(ctx)
 
-        if not tools_to_run:
-            return ctx
+        if tools_to_run:
+            # 2. Run selected tools
+            findings = await self._run_tools(tools_to_run, target, project_id)
 
-        # 2. Run selected tools
-        findings = await self._run_tools(tools_to_run, target, project_id)
+            for name, mod_findings in findings.items():
+                if mod_findings:
+                    ctx.modules_findings[name] = mod_findings
 
-        for name, mod_findings in findings.items():
-            if mod_findings:
-                ctx.modules_findings[name] = mod_findings
-
-        # 2.5 Merge WhatWeb findings into ctx.technologies for CVEPhase
-        whatweb_findings = findings.get("WhatWeb", [])
-        for f in whatweb_findings:
-            title = f.get("title", "")
-            if title.startswith("Tecnologia:"):
-                tech_name = title.split(":", 1)[1].strip()
-                raw = f.get("raw_data", {})
-                version = raw.get("version", "") if isinstance(raw, dict) else ""
-                category = raw.get("category", "") if isinstance(raw, dict) else ""
-                existing = [t for t in ctx.technologies if t["name"] == tech_name]
-                if not existing:
-                    ctx.technologies.append({
-                        "name": tech_name,
-                        "category": category,
-                        "version": version,
-                    })
+            # 2.5 Merge WhatWeb findings into ctx.technologies for CVEPhase
+            whatweb_findings = findings.get("WhatWeb", [])
+            for f in whatweb_findings:
+                title = f.get("title", "")
+                if title.startswith("Tecnologia:"):
+                    tech_name = title.split(":", 1)[1].strip()
+                    raw = f.get("raw_data", {})
+                    version = raw.get("version", "") if isinstance(raw, dict) else ""
+                    category = raw.get("category", "") if isinstance(raw, dict) else ""
+                    existing = [t for t in ctx.technologies if t["name"] == tech_name]
+                    if not existing:
+                        ctx.technologies.append({
+                            "name": tech_name,
+                            "category": category,
+                            "version": version,
+                        })
 
         # 3. Analyze results with LLM
         await self._analyze_with_llm(ctx)
@@ -199,28 +197,59 @@ class OrchestratorPhase(PipelinePhase):
 
         ctx.grounding_report = report
 
-        all_findings_text = []
-        for f in report.get("validated_findings", []):
-            all_findings_text.append(
+        validated = report.get("validated_findings", [])
+        unvalidated = report.get("unvalidated_findings", [])
+        active = report.get("active_findings", validated)
+
+        if active:
+            all_findings_text = [
                 f"[{f.get('source', '?')}] [{f.get('severity', 'Info')}] {f.get('title', '')}: {f.get('description', '')[:200]}"
+                for f in active
+            ]
+        elif validated:
+            all_findings_text = [
+                f"[{f.get('source', '?')}] [{f.get('severity', 'Info')}] {f.get('title', '')}: {f.get('description', '')[:200]}"
+                for f in validated
+            ]
+        else:
+            all_findings_text = [
+                f"[{f.get('source', '?')}] [{f.get('severity', 'Info')}] {f.get('title', '')}: {f.get('description', '')[:200]}"
+                for f in unvalidated[:20]
+            ]
+
+        total = report.get("total_findings", 0)
+        validated_count = report.get("validated_count", 0)
+        unvalidated_count = report.get("unvalidated_count", 0)
+        hallucination_risk = report.get("hallucination_risk", 0)
+
+        hallucination_warning = ""
+        if hallucination_risk > 0.3 and all_findings_text:
+            hallucination_warning = (
+                f"\nNOTE: {unvalidated_count}/{total} findings without full validation. "
+                f"Mark unvalidated findings as informational/low-confidence in your assessment."
             )
 
         if not all_findings_text:
+            ctx.ai_analysis = {
+                "critical_findings": [],
+                "attack_vectors": [],
+                "next_steps": [f"Run more specific scans against {ctx.target}"],
+                "hallucination_risk": 0,
+                "validated_findings": 0,
+                "unvalidated_findings": 0,
+                "summary": f"Scan completed for {ctx.target}. No actionable findings detected.",
+            }
+            ctx.exploitation_guide = []
             return
 
-        hallucination_warning = ""
-        if report.get("hallucination_risk", 0) > 0.3:
-            hallucination_warning = (
-                f"\nWARNING: {report.get('unvalidated_count', 0)}/{report.get('total_findings', 0)} "
-                "findings could not be validated. Do NOT include unvalidated data in your analysis."
-            )
+        finding_source = "findings" if active else ("validated findings" if validated else "unvalidated findings (low confidence)")
 
         prompt = f"""Target: {ctx.target}
 IP: {ctx.target_ip}
 Technologies: {[t['name'] for t in ctx.technologies]}
-Total findings: {len(all_findings_text)}{hallucination_warning}
+Total findings: {len(all_findings_text)} ({validated_count} validated, {unvalidated_count} unvalidated){hallucination_warning}
 
-Validated findings ONLY:
+Findings to analyze:
 {chr(10).join(all_findings_text[:30])}
 
 Analyze these findings and return a JSON.
@@ -229,6 +258,7 @@ CRITICAL RULE: Only use data from the findings above. Do NOT invent or hallucina
   "critical_findings": ["list of most critical issues to exploit first"],
   "attack_vectors": ["possible attack chains"],
   "next_steps": ["recommended next tools or manual tests"],
+  "summary": "Brief executive summary of findings",
   "exploitation_guide": [
     {{
       "finding": "name of finding",
@@ -255,9 +285,11 @@ CRITICAL RULE: Only use data from the findings above. Do NOT invent or hallucina
                 "critical_findings": parsed.get("critical_findings", []),
                 "attack_vectors": parsed.get("attack_vectors", []),
                 "next_steps": parsed.get("next_steps", []),
-                "hallucination_risk": report.get("hallucination_risk", 0),
-                "validated_findings": report.get("validated_count", 0),
-                "unvalidated_findings": report.get("unvalidated_count", 0),
+                "summary": parsed.get("summary", f"Scan of {ctx.target} complete."),
+                "hallucination_risk": hallucination_risk,
+                "validated_findings": validated_count,
+                "unvalidated_findings": unvalidated_count,
+                "finding_source": finding_source,
             }
             ctx.exploitation_guide = parsed.get("exploitation_guide", [])
 
@@ -269,9 +301,10 @@ CRITICAL RULE: Only use data from the findings above. Do NOT invent or hallucina
             ctx.ai_quality = quality_check
         except Exception:
             ctx.ai_analysis = {"critical_findings": [], "attack_vectors": [], "next_steps": [],
-                               "hallucination_risk": report.get("hallucination_risk", 0),
-                               "validated_findings": report.get("validated_count", 0),
-                               "unvalidated_findings": report.get("unvalidated_count", 0)}
+                               "summary": f"Scan of {ctx.target} complete. LLM analysis unavailable.",
+                               "hallucination_risk": hallucination_risk,
+                               "validated_findings": validated_count,
+                               "unvalidated_findings": unvalidated_count}
             ctx.exploitation_guide = []
 
     def _build_exploitation_guide(self, ctx):

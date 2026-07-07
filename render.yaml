@@ -1,0 +1,28 @@
+services:
+  - type: web
+    name: jaizz-noir
+    env: docker
+    repo: https://github.com/yourusername/jaizz-noir
+    plan: free
+    dockerfilePath: ./Dockerfile
+    envVars:
+      - key: FLASK_ENV
+        value: production
+      - key: SECRET_KEY
+        generateValue: true
+      - key: JWT_SECRET_KEY
+        generateValue: true
+      - key: GROQ_API_KEY
+        sync: false
+      - key: OPENAI_API_KEY
+        sync: false
+      - key: DEEPSEEK_API_KEY
+        sync: false
+      - key: GEMINI_API_KEY
+        sync: false
+      - key: NVIDIA_API_KEY
+        sync: false
+      - key: MONITOR_ENABLED
+        value: "true"
+    healthCheckPath: /
+    numInstances: 1

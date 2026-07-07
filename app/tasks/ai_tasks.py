@@ -1,10 +1,15 @@
 from app.extensions import celery_app, db
 from app.models.base import Finding
 import os
-from groq import Groq
 from app.ai.anonymizer import get_anonymizer
 
-client = Groq()
+
+def _get_groq_client():
+    from groq import Groq
+    api_key = os.environ.get("GROQ_API_KEY")
+    if not api_key:
+        return None
+    return Groq(api_key=api_key)
 
 FEW_SHOT_EXAMPLES = """
 --- EXEMPLO INFO: PORTA 80 ABERTA ---
@@ -108,7 +113,10 @@ Retorne APENAS UM JSON valido (sem markdown):
         try:
             anon = get_anonymizer()
             safe_prompt = anon.anonymize(prompt)
-            chat_completion = client.chat.completions.create(
+            groq = _get_groq_client()
+            if not groq:
+                raise RuntimeError("GROQ_API_KEY not configured")
+            chat_completion = groq.chat.completions.create(
                 messages=[
                     {
                         "role": "system",

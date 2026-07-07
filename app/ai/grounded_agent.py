@@ -2,6 +2,8 @@ import json
 import re
 from typing import Any, Dict, List, Optional
 
+from app.ai.confidence_scorer import ConfidenceScorer, ConfidenceScore, FrameworkAwareSuppressor
+
 
 class GroundedFinding:
     def __init__(
@@ -25,6 +27,9 @@ class GroundedFinding:
         self.cwe = cwe
         self.validated = False
         self.validation_notes = []
+        self.confidence: Optional[ConfidenceScore] = None
+        self.suppressed = False
+        self.suppression_reason = ""
 
     def to_dict(self) -> dict:
         return {
@@ -37,6 +42,9 @@ class GroundedFinding:
             "cwe": self.cwe,
             "validated": self.validated,
             "validation_notes": self.validation_notes,
+            "confidence": self.confidence.to_dict() if self.confidence else None,
+            "suppressed": self.suppressed,
+            "suppression_reason": self.suppression_reason,
         }
 
 
@@ -329,6 +337,9 @@ class Validator:
         if title and desc and len(desc) > 20:
             finding.validation_notes.append("Finding com titulo e descricao validos")
             finding.validated = True
+        elif title and desc and len(desc) >= 5:
+            finding.validation_notes.append("Finding informacional valido")
+            finding.validated = True
         elif title:
             finding.validation_notes.append("Apenas titulo, sem descricao")
 
@@ -352,14 +363,20 @@ class Presenter:
     def format_report(self, findings: List[GroundedFinding]) -> dict:
         validated = [f for f in findings if f.validated]
         unvalidated = [f for f in findings if not f.validated]
+        suppressed = [f for f in findings if f.suppressed]
+        active = [f for f in findings if not f.suppressed]
 
         return {
             "total_findings": len(findings),
             "validated_count": len(validated),
             "unvalidated_count": len(unvalidated),
+            "suppressed_count": len(suppressed),
+            "active_count": len(active),
             "hallucination_risk": len(unvalidated) / max(len(findings), 1),
             "validated_findings": [self.format_finding(f) for f in validated],
             "unvalidated_findings": [self.format_finding(f) for f in unvalidated],
+            "suppressed_findings": [self.format_finding(f) for f in suppressed],
+            "active_findings": [self.format_finding(f) for f in active],
         }
 
 
@@ -391,6 +408,17 @@ class GroundedPipeline:
         self.gatherer = None
         self.validator = Validator()
         self.presenter = Presenter(llm_client)
+        self.confidence_scorer = ConfidenceScorer()
+        self.suppressor = FrameworkAwareSuppressor()
+        self._init_suppression_rules()
+
+    def _init_suppression_rules(self):
+        self.suppressor.add_rule("cwe", r"cwe-755|json\.parse.*without", 0.4)
+        self.suppressor.add_rule("info", r"(info|informational|port.*open.*no.*service)", 0.5)
+        self.suppressor.add_rule("generic", r"(default\s+(error|page|welcome)|technolog(y|ies)\s+detected)", 0.6)
+        self.suppressor.add_rule("possible", r"(possible|maybe|potentially|might be|could be)", 0.5)
+        self.suppressor.add_rule("no_impact", r"(no.*impact|no.*exploit|informational\s+only)", 0.4)
+        self.suppressor.add_rule("suspicious", r"(suspicious|unusual|anomalous)\s+(behavior|activity|traffic)", 0.4)
 
     def process(self, ctx) -> dict:
         self.gatherer = Gatherer(ctx)
@@ -399,14 +427,26 @@ class GroundedPipeline:
         validated = []
         for f in raw_findings:
             f = self.validator.validate(f)
+            cs = self.confidence_scorer.score_finding(f.to_dict())
+            f.confidence = cs
+            if cs.score < 0.3:
+                f.suppressed = True
+                f.suppression_reason = f"low_confidence_{cs.score:.2f}"
             validated.append(f)
 
         cross = CrossValidator(ctx)
         validated = cross.validate_findings(validated)
 
+        for f in validated:
+            sup_result = self.suppressor.evaluate(f.to_dict())
+            if sup_result["suppressed"]:
+                f.suppressed = True
+                f.suppression_reason = sup_result["suppression_reason"]
+
         report = self.presenter.format_report(validated)
 
         ctx.grounded_findings = [f.to_dict() for f in validated]
         ctx.hallucination_risk = report["hallucination_risk"]
+        ctx.suppressed_findings = report.get("suppressed_count", 0)
 
         return report

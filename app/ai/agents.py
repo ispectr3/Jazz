@@ -3,6 +3,8 @@ from dataclasses import dataclass, field
 from typing import Any, Dict, List, Optional
 
 from app.ai.client import Message
+from app.ai.skills.loader import load_all_skills
+from app.ai.skills import get_registry
 
 
 AGENT_ROLES = [
@@ -16,14 +18,50 @@ AGENT_ROLES = [
     "planner",
 ]
 
+AGENT_SKILL_DOMAINS: Dict[str, List[str]] = {
+    "pentester": ["web-application-security", "ai-security"],
+    "searcher": [],
+    "coder": ["web-application-security"],
+    "installer": [],
+    "enricher": ["methodology"],
+    "adviser": ["methodology", "web-application-security"],
+    "reflector": ["methodology"],
+    "planner": ["web-application-security", "methodology"],
+}
+
+AGENT_SKILL_TAGS: Dict[str, List[str]] = {
+    "pentester": ["xss", "injection", "ssrf", "web-security"],
+    "searcher": [],
+    "coder": ["browser-security", "worker"],
+    "installer": [],
+    "enricher": ["lessons-learned"],
+    "adviser": ["lessons-learned", "methodology"],
+    "reflector": ["validation", "lessons-learned"],
+    "planner": ["web-security", "methodology"],
+}
+
+
+def _build_skill_augmented_prompt(base: str, role: str) -> str:
+    registry = get_registry()
+    if registry.count() == 0:
+        load_all_skills()
+    domains = AGENT_SKILL_DOMAINS.get(role, [])
+    tags = AGENT_SKILL_TAGS.get(role, [])
+    skills = registry.find_relevant("", domains=domains, tags=tags)
+    if not skills:
+        return base
+    skill_text = registry.format_for_prompt(skills)
+    return f"{base}\n\n{skill_text}"
+
 
 SYSTEM_PROMPTS: Dict[str, str] = {
-    "pentester": (
+    "pentester": _build_skill_augmented_prompt(
         "You are a senior penetration testing specialist. You exploit vulnerabilities, "
         "execute attack chains, and validate security findings. "
         "You have deep knowledge of OWASP Top 10, network protocols, and exploitation techniques. "
         "Always provide concrete commands, payloads, and step-by-step instructions. "
-        "Focus on practical exploitation, not theoretical vulnerabilities."
+        "Focus on practical exploitation, not theoretical vulnerabilities.",
+        "pentester",
     ),
     "searcher": (
         "You are an OSINT and reconnaissance specialist. You gather information about targets "
@@ -31,11 +69,12 @@ SYSTEM_PROMPTS: Dict[str, str] = {
         "You are efficient and thorough, finding relevant CVE data, exploit code, "
         "and technical documentation. Be concise and actionable."
     ),
-    "coder": (
+    "coder": _build_skill_augmented_prompt(
         "You are an exploit developer and script writer. You create proof-of-concept exploits, "
         "custom scripts, and automation tools in Python, Bash, and Go. "
         "Your code is clean, well-structured, and handles errors gracefully. "
-        "Always test your code mentally before presenting it."
+        "Always test your code mentally before presenting it.",
+        "coder",
     ),
     "installer": (
         "You are a DevSecOps engineer who sets up penetration testing environments. "
@@ -43,31 +82,35 @@ SYSTEM_PROMPTS: Dict[str, str] = {
         "and ensure the testing infrastructure is ready. "
         "You are methodical and document every step."
     ),
-    "enricher": (
+    "enricher": _build_skill_augmented_prompt(
         "You are a security data analyst. You correlate findings, identify patterns, "
         "and provide context for discovered vulnerabilities. "
         "You map findings to MITRE ATT&CK techniques and CWE categories. "
-        "You help separate real vulnerabilities from noise."
+        "You help separate real vulnerabilities from noise.",
+        "enricher",
     ),
-    "adviser": (
+    "adviser": _build_skill_augmented_prompt(
         "You are a senior security advisor providing strategic guidance. "
         "You review the current state of the penetration test and suggest next steps. "
         "You detect when the agent is stuck in a loop or going down a dead end. "
         "You recommend alternative approaches when the current strategy fails. "
-        "Be concise and direct."
+        "Be concise and direct.",
+        "adviser",
     ),
-    "reflector": (
+    "reflector": _build_skill_augmented_prompt(
         "You are a quality assurance reviewer. You review findings for accuracy, "
         "completeness, and evidence quality. You check for hallucinations, "
         "false positives, and insufficient evidence. "
         "You ensure every finding has actionable remediation guidance. "
-        "Be critical and thorough."
+        "Be critical and thorough.",
+        "reflector",
     ),
-    "planner": (
+    "planner": _build_skill_augmented_prompt(
         "You are a penetration testing strategist. You decompose complex testing goals "
         "into 3-7 specific, actionable steps. Each step targets a specific attack surface "
         "or testing phase. You consider the full attack chain from recon to exploitation "
-        "and ensure no critical path is missed."
+        "and ensure no critical path is missed.",
+        "planner",
     ),
 }
 
