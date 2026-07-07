@@ -1,7 +1,9 @@
+import json
 from flask import Blueprint, request, jsonify
 from app.extensions import db
 from app.models.base import Project, Finding
 from datetime import datetime
+from app.events import get_stream_manager
 
 scanner_bp = Blueprint('scanner', __name__)
 
@@ -270,3 +272,161 @@ def _start_fullscan(target, project_id):
         "type": "fullscan",
         "task_id": async_res.id,
     }), 200
+
+
+def _run_pipeline_background(target: str, project_id: int, flow_id: int):
+    import asyncio
+    import json
+    from app import create_app
+    from app.pipeline import create_pipeline
+    from app.ai.llm import set_current_flow
+
+    set_current_flow(flow_id)
+    app = create_app()
+    with app.app_context():
+        from app.extensions import db
+        from app.models.flow import Flow, FlowTask
+
+        pipeline = create_pipeline()
+        loop = asyncio.new_event_loop()
+        asyncio.set_event_loop(loop)
+        try:
+            ctx = loop.run_until_complete(pipeline.execute(target, project_id, flow_id=flow_id))
+            flow = db.session.get(Flow, flow_id)
+            if flow:
+                flow.result_data = json.dumps({
+                    "target_ip": ctx.target_ip,
+                    "technologies": ctx.technologies,
+                    "cves": ctx.cves[:5],
+                    "findings_count": len(ctx.findings),
+                    "modules_run": list(ctx.modules_findings.keys()),
+                    "modules_findings_count": sum(len(v) for v in ctx.modules_findings.values()),
+                    "tools_selected": ctx.tools_selected,
+                    "ai_analysis": ctx.ai_analysis,
+                    "risk_scores": ctx.risk_scores,
+                    "exploitation_guide": ctx.exploitation_guide[:3],
+                    "report_paths": ctx.report_paths,
+                    "recommendations": ctx.ai_report.get("recommendations", []) if ctx.ai_report else [],
+                }, default=str)
+                flow.complete()
+                db.session.commit()
+
+            for phase in pipeline.phases:
+                ptask = FlowTask(
+                    flow_id=flow_id,
+                    phase_name=phase.name,
+                    status="completed",
+                )
+                db.session.add(ptask)
+            db.session.commit()
+        except Exception as e:
+            flow = db.session.get(Flow, flow_id)
+            if flow:
+                flow.complete(error=str(e))
+                db.session.commit()
+            get_stream_manager().emit_error(flow_id, str(e))
+        finally:
+            loop.close()
+
+
+@scanner_bp.route('/pipeline', methods=['POST'])
+def run_pipeline():
+    data = request.get_json()
+    if not data or 'target' not in data:
+        return jsonify({"error": "Target é obrigatorio"}), 400
+
+    target = data['target']
+    from app.extensions import db
+    project = Project(name=f"Pipeline: {target}", description=f"Pipeline scan em {target}")
+    db.session.add(project)
+    db.session.commit()
+    project_id = project.id
+
+    from app.models.flow import Flow
+    flow = Flow(project_id=project_id, target=target)
+    db.session.add(flow)
+    db.session.commit()
+    flow.start()
+    db.session.commit()
+
+    import threading
+    t = threading.Thread(target=_run_pipeline_background, args=(target, project_id, flow.id), daemon=True)
+    t.start()
+
+    return jsonify({
+        "status": "started",
+        "project_id": project_id,
+        "flow_id": flow.id,
+        "target": target,
+        "message": "Pipeline iniciado em background",
+    }), 202
+
+
+from app.extensions import sock
+
+
+@sock.route('/api/flows/<int:flow_id>/ws')
+def flow_ws(ws, flow_id: int):
+    mgr = get_stream_manager()
+    mgr.subscribe(flow_id, ws)
+    try:
+        while True:
+            msg = ws.receive(timeout=30)
+            if msg is None:
+                break
+    except Exception:
+        pass
+    finally:
+        mgr.unsubscribe(flow_id, ws)
+
+
+@scanner_bp.route('/flows', methods=['GET'])
+def list_flows():
+    from app.models.flow import Flow
+    page = request.args.get("page", 1, type=int)
+    per_page = min(request.args.get("per_page", 20, type=int), 100)
+    flows = Flow.query.order_by(Flow.created_at.desc()).paginate(page=page, per_page=per_page)
+    return jsonify({
+        "flows": [f.to_dict() for f in flows.items],
+        "total": flows.total,
+        "page": flows.page,
+        "pages": flows.pages,
+    }), 200
+
+@scanner_bp.route('/flows/<int:flow_id>', methods=['GET'])
+def get_flow(flow_id):
+    from app.models.flow import Flow
+    flow = Flow.query.get(flow_id)
+    if not flow:
+        return jsonify({"error": "Flow nao encontrado"}), 404
+    data = flow.to_dict()
+    data["tasks"] = [t.to_dict() for t in flow.tasks]
+    return jsonify(data), 200
+
+@scanner_bp.route('/flows/<int:flow_id>/tasks', methods=['GET'])
+def get_flow_tasks(flow_id):
+    from app.models.flow import FlowTask
+    tasks = FlowTask.query.filter_by(flow_id=flow_id).order_by(FlowTask.created_at).all()
+    return jsonify({
+        "tasks": [t.to_dict() for t in tasks],
+        "total": len(tasks),
+    }), 200
+
+@scanner_bp.route('/reports/<path:filename>')
+def serve_report(filename):
+    import os
+    reports_dir = os.path.join(os.path.dirname(__file__), '..', 'reports')
+    safe_path = os.path.normpath(os.path.join(reports_dir, filename))
+    if not safe_path.startswith(os.path.normpath(reports_dir)):
+        return "Forbidden", 403
+    if not os.path.exists(safe_path):
+        return "Not found", 404
+    with open(safe_path, 'r') as f:
+        content = f.read()
+    if filename.endswith('.html'):
+        return content, 200, {'Content-Type': 'text/html; charset=utf-8'}
+    elif filename.endswith('.json'):
+        return content, 200, {'Content-Type': 'application/json; charset=utf-8'}
+    elif filename.endswith('.md'):
+        return content, 200, {'Content-Type': 'text/markdown; charset=utf-8'}
+    return content, 200

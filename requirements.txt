@@ -2,6 +2,7 @@ Flask
 Flask-SQLAlchemy
 Flask-Migrate
 Flask-JWT-Extended
+Flask-Sock
 Celery
 redis
 psycopg2-binary
@@ -9,3 +10,4 @@ pydantic
 python-dotenv
 groq
 Flask-CORS
+langfuse

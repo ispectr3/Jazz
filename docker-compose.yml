@@ -1,0 +1,31 @@
+version: "3.8"
+
+services:
+  dvwa:
+    image: vulnerables/web-dvwa:latest
+    ports:
+      - "42801:80"
+    environment:
+      - DB_SERVER=mysql
+      - MYSQL_USER=dvwa
+      - MYSQL_PASSWORD=p@ssw0rd
+      - MYSQL_DATABASE=dvwa
+
+  juice-shop:
+    image: bkimminich/juice-shop:latest
+    ports:
+      - "42802:3000"
+
+  webgoat:
+    image: webgoat/webgoat:latest
+    ports:
+      - "42803:8080"
+
+  testphp:
+    image: webdevops/php-apache:latest
+    ports:
+      - "42804:80"
+    environment:
+      - WEB_DOCUMENT_ROOT=/app
+    volumes:
+      - ./test-targets/testphp:/app

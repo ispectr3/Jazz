@@ -13,4 +13,12 @@ wordlists/
 .PLAN/
 *.zip
 jazz.mp3
-.env
+.ralph/
+reports/
+app/reports/
+captures/
+hashes/
+cracked/
+test-targets/
+Noir/
+.venv/

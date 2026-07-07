@@ -1,7 +1,7 @@
 import os
 from flask import Flask
 from config import Config
-from app.extensions import db, jwt, celery_app
+from app.extensions import db, jwt, celery_app, sock
 
 def create_app(config_class=Config):
     app = Flask(__name__)
@@ -10,6 +10,7 @@ def create_app(config_class=Config):
     # Inicializar extensões
     db.init_app(app)
     jwt.init_app(app)
+    sock.init_app(app)
 
     # Configurar Celery
     basedir = os.path.abspath(os.path.dirname(__file__))
@@ -21,6 +22,7 @@ def create_app(config_class=Config):
         from app.models.base import Role, User, Project, Finding, AuditLog
         from app.models.wireless import WirelessScan, WirelessNetwork, WirelessCapture
         from app.models.hashcat import CrackJob
+        from app.models.flow import Flow, FlowTask, FlowSubtask
         db.create_all()
 
     # Registrar Blueprints
@@ -30,6 +32,7 @@ def create_app(config_class=Config):
     from app.api.wireless import wireless_bp
     from app.api.hashcat import hashcat_bp
     from app.api.debug import debug_bp
+    from app.api.traces import traces_bp
 
     app.register_blueprint(auth_bp, url_prefix='/api/auth')
     app.register_blueprint(findings_bp, url_prefix='/api/findings')
@@ -37,6 +40,7 @@ def create_app(config_class=Config):
     app.register_blueprint(wireless_bp, url_prefix='/api')
     app.register_blueprint(hashcat_bp, url_prefix='/api')
     app.register_blueprint(debug_bp, url_prefix='/debug')
+    app.register_blueprint(traces_bp, url_prefix='/api')
 
     from flask import render_template
     from flask_cors import CORS
@@ -48,5 +52,12 @@ def create_app(config_class=Config):
     @app.route('/')
     def index():
         return render_template("jazznoir-dashboard.html")
+
+    with app.app_context():
+        try:
+            from app.ai.cve_rag import init_index
+            init_index()
+        except Exception:
+            pass
 
     return app

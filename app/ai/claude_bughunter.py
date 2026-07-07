@@ -18,6 +18,10 @@ def _get_client():
 
 def _anonymized_chat(messages: list[dict], **kwargs) -> str:
     """Wrapper que anonimiza PII antes de enviar ao Groq e restaura no response."""
+    api_key = os.environ.get("GROQ_API_KEY")
+    if not api_key:
+        return _fallback_analysis(messages, kwargs)
+
     anon = get_anonymizer()
     clean_messages = []
     for msg in messages:
@@ -32,6 +36,61 @@ def _anonymized_chat(messages: list[dict], **kwargs) -> str:
     )
     raw = chat.choices[0].message.content
     return anon.restore_response(raw)
+
+
+def _fallback_analysis(messages: list[dict], kwargs: dict) -> str:
+    """Fallback rule-based analysis when no LLM API key is available."""
+    import re
+    user_content = ""
+    for msg in messages:
+        if msg['role'] == 'user':
+            user_content += msg.get('content', '')
+
+    findings = []
+    idx = 0
+    pattern = re.findall(r'\[(\d+)\]\s*\(([^)]*)\)\s*([^\n|]*)', user_content)
+    for match in pattern:
+        i, source, title = match
+        title_clean = title.strip()
+        source_clean = source.strip()
+
+        sev = "Media"
+        if any(w in title_clean.lower() for w in ["critical", "critica", "critical", "rce", "sql", "xss", "auth bypass"]):
+            sev = "Alta"
+        elif any(w in title_clean.lower() for w in ["medium", "media", "csrf", "ssrf", "idor"]):
+            sev = "Media"
+        elif any(w in title_clean.lower() for w in ["low", "baixa", "info"]):
+            sev = "Baixa"
+        else:
+            sev = "Info"
+
+        findings.append({
+            "index": int(i),
+            "severity": sev,
+            "cvss_estimate": "7.5" if sev == "Alta" else "5.0" if sev == "Media" else "2.0",
+            "cwe": "N/A",
+            "executive_summary": title_clean[:200],
+            "attack_vector": "Revisar manualmente.",
+            "remediation": "Revisar manualmente.",
+            "exploitability": "medio",
+            "chainable": False,
+        })
+        idx += 1
+
+    if not findings:
+        findings.append({
+            "index": 0,
+            "severity": "Info",
+            "cvss_estimate": "0.0",
+            "cwe": "N/A",
+            "executive_summary": "Nenhum achado relevante identificado na analise automatica.",
+            "attack_vector": "N/A",
+            "remediation": "N/A",
+            "exploitability": "dificil",
+            "chainable": False,
+        })
+
+    return json.dumps({"findings": findings})
 
 REAL_REPORTS_KB = None
 def _load_report_kb():
@@ -185,7 +244,7 @@ Use estes exemplos como referencia para classificar:
 Estes sao achados REAIS de auditorias publicadas por empresas como Cure53, BishopFox, TrailOfBits e NCC Group. Use-os como referencia de severidade e analise:
 {REAL_EXAMPLES}
 
-{ TECHNIQUES_REFERENCE }
+{TECHNIQUES_REFERENCE}
 
 ## DIRETRIZES GERAIS
 - **SOMENTE classifique como Critica/Alta se houver EXPLORACAO REAL viavel.**

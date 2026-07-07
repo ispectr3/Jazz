@@ -145,26 +145,45 @@
         }
 
         /* ===== STEP STATE DISPLAY ===== */
-        .target-display {
-            display: none;
-            align-items: center;
-            gap: 8px;
-            padding: 8px 12px;
-            background: rgba(0,0,0,0.3);
-            border: 1px solid var(--border-color);
-            margin-bottom: 10px;
-            font-size: 12px;
-        }
-        .target-display.visible { display: flex; }
-        .target-display .target-label { color: var(--text-muted); }
-        .target-display .target-value { color: var(--accent-green); font-weight: 700; }
-        .target-display .target-change {
-            margin-left: auto;
-            color: var(--text-muted);
-            cursor: pointer;
-            font-size: 10px;
-        }
-        .target-display .target-change:hover { color: var(--text-main); }
+        /* ===== DASHBOARD REDESIGN ===== */
+        .risk-hero { text-align: center; padding: 30px 20px; margin: 0 0 15px; background: rgba(0,0,0,0.3); border: 1px solid var(--border-color); border-radius: 8px; }
+        .risk-hero-score { font-size: 64px; font-weight: 900; line-height: 1; }
+        .risk-hero-label { font-size: 11px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 2px; margin-top: 4px; }
+        .risk-hero-sub { font-size: 12px; color: var(--text-muted); margin-top: 8px; }
+        .dash-stats { display: grid; grid-template-columns: repeat(5, 1fr); gap: 10px; margin-bottom: 15px; }
+        .dash-stat-card { background: rgba(0,0,0,0.2); border: 1px solid var(--border-color); border-radius: 6px; padding: 12px; text-align: center; }
+        .dash-stat-val { font-size: 22px; font-weight: 700; display: block; }
+        .dash-stat-label { font-size: 10px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 1px; margin-top: 2px; }
+        .risk-bar-item { display: flex; align-items: center; gap: 10px; margin: 6px 0; font-size: 12px; }
+        .risk-bar-item .rbi-label { width: 110px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; flex-shrink: 0; }
+        .risk-bar-item .rbi-track { flex: 1; height: 8px; background: #222; border-radius: 4px; overflow: hidden; }
+        .risk-bar-item .rbi-fill { height: 100%; border-radius: 4px; transition: width 0.5s; }
+        .risk-bar-item .rbi-val { width: 28px; text-align: right; font-weight: 600; flex-shrink: 0; }
+        .tech-chip { display: inline-block; padding: 4px 10px; margin: 3px; border: 1px solid var(--border-color); border-radius: 12px; font-size: 11px; }
+        .tech-chip .tech-version { color: var(--text-muted); font-size: 10px; }
+
+        .stats-summary { display:flex; gap:12px; margin:10px 0; flex-wrap:wrap; }
+        .stat-item { flex:1; min-width:80px; text-align:center; padding:10px; background:rgba(0,0,0,0.2); border:1px solid var(--border-color); border-radius:6px; }
+        .stat-item .stat-label { display:block; font-size:10px; color:var(--text-muted); text-transform:uppercase; letter-spacing:1px; }
+        .stat-item .stat-value { display:block; font-size:22px; font-weight:700; margin-top:4px; }
+        .stat-item.crit .stat-value { color:#ff4444; }
+        .stat-item.high .stat-value { color:#ff7744; }
+        .stat-item.med .stat-value { color:#ffcc44; }
+        .stat-item.low .stat-value { color:#aaaaaa; }
+        .sev-bar { display:flex; height:6px; border-radius:3px; overflow:hidden; margin:8px 0; }
+        .sev-bar .bar-seg { transition:width 0.5s; }
+        .bar-critica { background:#ff4444; }
+        .bar-alta { background:#ff7744; }
+        .bar-media { background:#ffcc44; }
+        .bar-baixa { background:#6b6b6b; }
+        .bar-info { background:#4b6a4b; }
+
+        .toast-container { position:fixed; bottom:70px; right:20px; z-index:9999; display:flex; flex-direction:column-reverse; gap:8px; }
+        .toast { padding:10px 16px; border-radius:4px; font-size:12px; font-family:var(--font-mono); border:1px solid var(--border-color); animation: slideIn 0.3s ease; max-width:360px; word-break:break-word; }
+        .toast-error { background:rgba(192,38,38,0.9); color:#fff; }
+        .toast-success { background:rgba(75,106,75,0.9); color:#fff; }
+        .toast-info { background:rgba(30,30,30,0.95); color:var(--text-main); border-color:var(--text-muted); }
+        @keyframes slideIn { from { transform:translateX(100%); opacity:0; } to { transform:translateX(0); opacity:1; } }
 
         .logo-container {
             text-align: center;
@@ -254,7 +273,7 @@
             position: relative;
             display: flex;
             flex-direction: column;
-            background-color: #851313;
+            background-color: var(--bg-color);
             background-image: linear-gradient(rgba(10, 10, 12, 0.6), rgba(10, 10, 12, 0.65)), url('/static/bg.png');
             background-size: cover;
             background-position: left top, right center;
@@ -925,7 +944,7 @@
 
     <aside class="sidebar">
         <div class="logo-container">
-            <i class="fa-solid fa-hat-fedora logo-icon"></i>
+            <img src="/static/bg.png" alt="Jazz Noir" style="width:48px;height:48px;border-radius:50%;margin-bottom:8px;border:2px solid var(--accent-red);object-fit:cover;">
             <div class="logo-text">Jazz Noir</div>
             <div class="logo-subtext">— PENTEST SUITE —</div>
         </div>
@@ -939,6 +958,11 @@
                 <i class="fa-solid fa-bug nav-icon"></i>
                 <span>Vulnerabilidades</span>
             </a>
+            <a href="#" class="nav-item" id="nav-toggle-modules" onclick="toggleModuleSelector()">
+                <i class="fa-solid fa-cubes nav-icon"></i>
+                <span>Engines</span>
+                <span class="engine-count" id="engine-total-count-sidebar">0</span>
+            </a>
         </nav>
 
         <div class="quote-box">
@@ -951,13 +975,6 @@
         <div class="header">
             <h1 class="main-title">Jazz Noir</h1>
             <div class="main-subtitle">— PENTEST SUITE —</div>
-        </div>
-
-        <!-- ===== TARGET DISPLAY ===== -->
-        <div class="target-display" id="target-display">
-            <span class="target-label">Alvo:</span>
-            <span class="target-value" id="target-value">—</span>
-            <span class="target-change" onclick="document.getElementById('target-display').classList.remove('visible');document.getElementById('module-selector').classList.remove('visible');document.getElementById('cmd-input').focus();">Alterar</span>
         </div>
 
         <!-- ===== MODULE SELECTOR ===== -->
@@ -977,35 +994,51 @@
 
             <!-- ===== VIEW: DASHBOARD ===== -->
             <div class="view-panel active" data-view="dashboard">
-
-                <div class="panel">
-                    <div class="panel-title">SUMARIO</div>
-                    <div class="sev-count-bar" id="sev-dist-bar">
-                        <div class="bar-seg bar-info" style="width:100%"></div>
-                    </div>
-                    <div class="stat-row">
-                        <span class="stat-label">Total</span>
-                        <span class="stat-val val-total">0</span>
-                    </div>
-                    <div class="stat-row">
-                        <span class="stat-label">Criticas</span>
-                        <span class="stat-val val-critical">0</span>
-                    </div>
-                    <div class="stat-row">
-                        <span class="stat-label">Altas</span>
-                        <span class="stat-val val-high">0</span>
-                    </div>
-                    <div class="stat-row">
-                        <span class="stat-label">Medias</span>
-                        <span class="stat-val val-medium">0</span>
-                    </div>
-                    <div class="stat-row">
-                        <span class="stat-label">Baixas</span>
-                        <span class="stat-val val-low">0</span>
-                    </div>
+                <div class="risk-hero" id="risk-hero">
+                    <div class="risk-hero-score" id="risk-hero-score">—</div>
+                    <div class="risk-hero-label">RISK SCORE</div>
+                    <div class="risk-hero-sub" id="risk-hero-sub">Aguardando scan...</div>
                 </div>
 
-            </div>
+                <div class="dash-stats">
+                    <div class="dash-stat-card"><span class="dash-stat-val" id="dash-target">—</span><span class="dash-stat-label">Target</span></div>
+                    <div class="dash-stat-card"><span class="dash-stat-val" id="dash-ip">—</span><span class="dash-stat-label">IP</span></div>
+                    <div class="dash-stat-card"><span class="dash-stat-val" id="dash-techs">0</span><span class="dash-stat-label">Technologies</span></div>
+                    <div class="dash-stat-card"><span class="dash-stat-val" id="dash-cves">0</span><span class="dash-stat-label">CVEs</span></div>
+                    <div class="dash-stat-card"><span class="dash-stat-val" id="dash-findings">0</span><span class="dash-stat-label">Findings</span></div>
+                </div>
+
+                <!-- Summary Stats -->
+                <div class="panel" style="grid-column: span 2;">
+                    <div class="panel-title">SEVERITY DISTRIBUTION</div>
+                    <div class="stats-summary">
+                        <div class="stat-item"><span class="stat-label">Total</span><span class="stat-value val-total">0</span></div>
+                        <div class="stat-item crit"><span class="stat-label">Crítica</span><span class="stat-value val-critical">0</span></div>
+                        <div class="stat-item high"><span class="stat-label">Alta</span><span class="stat-value val-high">0</span></div>
+                        <div class="stat-item med"><span class="stat-label">Média</span><span class="stat-value val-medium">0</span></div>
+                        <div class="stat-item low"><span class="stat-label">Baixa</span><span class="stat-value val-low">0</span></div>
+                    </div>
+                    <div class="sev-bar" id="sev-dist-bar"></div>
+                </div>
+
+                <!-- Findings list (dashboard) -->
+                <div class="panel" style="grid-column: 1 / -1;">
+                    <div class="panel-title" style="display:flex;justify-content:space-between;align-items:center;">
+                        <span>FINDINGS</span>
+                        <div class="filter-pills" id="filter-pills-dash">
+                            <span class="filter-pill active" data-sev="all">Todas</span>
+                            <span class="filter-pill pill-critica" data-sev="critica">Crítica</span>
+                            <span class="filter-pill pill-alta" data-sev="alta">Alta</span>
+                            <span class="filter-pill pill-media" data-sev="media">Média</span>
+                            <span class="filter-pill pill-baixa" data-sev="baixa">Baixa</span>
+                            <span class="filter-pill pill-info" data-sev="info">Info</span>
+                            <span class="filter-pill" id="info-toggle-dash" style="cursor:pointer;border:1px solid var(--border-color);" title="Ocultar/mostrar informações"><i class="fa-solid fa-eye-slash"></i> Hide Info</span>
+                        </div>
+                    </div>
+                    <div id="findings-grouped-container">
+                        <div style="color:var(--text-muted);font-size:12px;">Nenhum resultado ainda. Execute um pipeline.</div>
+                    </div>
+                </div>
 
             <!-- ===== VIEW: VULNERABILIDADES ===== -->
             <div class="view-panel" data-view="vulnerabilidades">
@@ -1048,6 +1081,9 @@
             </div>
 
         </div>
+
+        <!-- Toast notifications container -->
+        <div class="toast-container" id="toast-container"></div>
 
         <!-- Modal de Detalhes do Finding (MELHORADO) -->
         <div class="modal-overlay" id="finding-modal" onclick="if(event.target===this)closeFindingModal()">
@@ -1192,6 +1228,31 @@
         }
 
         setInterval(rotatePrompt, 3500);
+
+        // ===== TOAST NOTIFICATION =====
+        function showToast(message, type) {
+            type = type || 'info';
+            const container = document.getElementById('toast-container');
+            if (!container) return;
+            const toast = document.createElement('div');
+            toast.className = 'toast toast-' + type;
+            toast.innerText = message;
+            container.appendChild(toast);
+            setTimeout(() => {
+                toast.style.opacity = '0';
+                toast.style.transition = 'opacity 0.3s';
+                setTimeout(() => toast.remove(), 300);
+            }, 4000);
+        }
+
+        // ===== TOGGLE MODULE SELECTOR =====
+        window.toggleModuleSelector = function() {
+            const el = document.getElementById('module-selector');
+            if (el) {
+                el.classList.toggle('visible');
+                showToast(el.classList.contains('visible') ? 'Seletor de engines aberto' : 'Seletor de engines fechado', 'info');
+            }
+        };
 
         // ===== MARKDOWN PARSER LEVE =====
         function parseMarkdown(text) {
@@ -1379,7 +1440,25 @@
                 }
             }
 
-            let currentTarget = '';
+            function updatePipelineDashboard(data) {
+                const overall = data.risk_scores?.overall ?? null;
+                const hero = document.getElementById('risk-hero-score');
+                const heroSub = document.getElementById('risk-hero-sub');
+                if (overall !== null) {
+                    hero.innerText = overall + '/100';
+                    hero.style.color = overall < 40 ? '#ff4444' : overall < 70 ? '#ffcc44' : '#88cc88';
+                    heroSub.innerText = overall < 40 ? 'Critical' : overall < 70 ? 'High' : 'Low';
+                } else {
+                    hero.innerText = '—';
+                    heroSub.innerText = 'Aguardando scan...';
+                }
+                document.getElementById('dash-target').innerText = data.target || '—';
+                document.getElementById('dash-ip').innerText = data.target_ip || '—';
+                document.getElementById('dash-techs').innerText = (data.technologies || []).length;
+                document.getElementById('dash-cves').innerText = (data.cves || []).length;
+                document.getElementById('dash-findings').innerText = data.findings_count || 0;
+            }
+
             window.startScanWithTarget = async function(targetInput) {
                 const cmdInput = document.getElementById('cmd-input');
                 const target = (targetInput || cmdInput.value).trim();
@@ -1390,96 +1469,145 @@
                     return;
                 }
                 currentTarget = target;
-                document.getElementById('target-value').innerText = target;
-                document.getElementById('target-display').classList.add('visible');
                 cmdInput.value = '';
                 cmdInput.placeholder = 'Digite outro alvo ou clique "Alterar"...';
                 const terminal = document.getElementById('terminal-logs');
                 terminal.innerHTML += `<div><span style="color:var(--accent-green)">[Target]</span> Alvo definido: <b>${target}</b></div>`;
                 terminal.scrollTop = terminal.scrollHeight;
-                // Direct scan — cria projeto e busca engines
-                let project_id = 1;
-                try {
-                    const presp = await fetch('/api/projects', {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ name: 'Scan: ' + target, description: 'Auto scan em ' + target })
-                    });
-                    if (presp.ok) {
-                        const p = await presp.json();
-                        project_id = p.id;
-                        currentProjectId = project_id;
-                        terminal.innerHTML += `<div><span style="color:var(--text-muted)">[+]</span> Projeto #${project_id} criado</div>`;
-                        terminal.scrollTop = terminal.scrollHeight;
-                    }
-                } catch(e) {
-                    terminal.innerHTML += `<div><span style="color:#c02626">[!]</span> Erro ao criar projeto: ${e.message}</div>`;
-                    terminal.scrollTop = terminal.scrollHeight;
-                }
-                let engines = [];
-                try {
-                    const eresp = await fetch('/api/engines');
-                    if (eresp.ok) {
-                        const list = await eresp.json();
-                        engines = list.map(e => e.id);
-                        terminal.innerHTML += `<div><span style="color:var(--text-muted)">[+]</span> ${engines.length} módulos carregados</div>`;
-                        terminal.scrollTop = terminal.scrollHeight;
-                    }
-                } catch(e) {
-                    terminal.innerHTML += `<div><span style="color:#c02626">[!]</span> Erro ao carregar engines: ${e.message}</div>`;
-                    terminal.scrollTop = terminal.scrollHeight;
-                    return;
-                }
-                if (engines.length === 0) {
-                    terminal.innerHTML += `<div><span style="color:#c02626">[!]</span> Nenhum módulo disponível</div>`;
-                    terminal.scrollTop = terminal.scrollHeight;
-                    return;
-                }
-                selectedModules.clear();
-                engines.forEach(e => selectedModules.add(e.id));
-                document.querySelectorAll('.module-check input').forEach(cb => cb.checked = true);
-                updateScanButton();
-                // Dispara scan
                 const status = document.getElementById('log-status');
-                status.innerText = 'Iniciando scan...';
+                status.innerText = 'Iniciando pipeline...';
                 status.style.color = 'var(--accent-red)';
                 status.classList.add('scan-pulse');
-                terminal.innerHTML += `<div><span style="color:var(--text-main)">[${new Date().toLocaleTimeString()}]</span> Iniciando scan em: <b>${target}</b> com ${engines.length} módulos</div>`;
+                terminal.innerHTML += `<div><span style="color:var(--text-main)">[${new Date().toLocaleTimeString()}]</span> Pipeline scan em: <b>${target}</b></div>`;
                 terminal.scrollTop = terminal.scrollHeight;
-                document.querySelector('.module-actions').innerHTML = '<div style="color:var(--accent-green);font-size:11px;"><i class="fa-solid fa-spinner fa-spin"></i> Scan em andamento...</div>';
                 try {
-                    const resp = await fetch('/api/scan', {
+                    const resp = await fetch('/api/pipeline', {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ target: target, engines: engines, project_id: project_id })
+                        body: JSON.stringify({ target: target })
                     });
                     const data = await resp.json();
-                    terminal.innerHTML += `<div><span style="color:#8b8075">[+]</span> ${data.dispatched}/${data.total} módulos disparados</div>`;
-                    for (const r of data.engines) {
-                        const icon = r.status === 'dispatched' ? '<span style="color:#4b6a4b">✓</span>' : '<span style="color:#c02626">✗</span>';
-                        const reason = r.error || r.reason || '';
-                        const taskInfo = r.task_id ? `<span style="color:var(--text-muted);font-size:9px;"> [${r.task_id.slice(0,8)}]</span>` : '';
-                        terminal.innerHTML += `<div style="font-size:11px;">${icon} <b>${r.engine}</b> — ${r.status} ${taskInfo} ${reason ? '('+reason+')' : ''}</div>`;
-                    }
-                    terminal.scrollTop = terminal.scrollHeight;
-                    status.innerText = 'Scan em execução...';
-                    setTimeout(() => {
-                        terminal.innerHTML += `<div><span style="color:#4b6a4b">[SUCCESS]</span> Scan concluído! Painel atualizado.</div>`;
-                        terminal.scrollTop = terminal.scrollHeight;
-                        status.innerText = 'Pronto';
-                        status.style.color = 'var(--text-muted)';
+                    if (data.status !== 'started') {
+                        terminal.innerHTML += `<div><span style="color:#c02626">[ERROR]</span> Falha ao iniciar pipeline</div>`;
+                        status.innerText = 'Erro';
+                        status.style.color = '#c02626';
                         status.classList.remove('scan-pulse');
-                        fetchFindingsStats();
-                        fetchGroupedFindings(currentDashFilter, 'findings-grouped-container', false);
-                        fetchGroupedFindings(currentVulnFilter, 'vuln-grouped-container', true);
-                    }, 3000);
+                        return;
+                    }
+                    const flowId = data.flow_id;
+                    currentProjectId = data.project_id;
+                    terminal.innerHTML += `<div><span style="color:#8b8075">[+]</span> Pipeline iniciado — Flow #${flowId} | Projeto #${data.project_id}</div>`;
+                    terminal.scrollTop = terminal.scrollHeight;
+
+                    // Connect WebSocket for live events
+                    const wsProto = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+                    const ws = new WebSocket(`${wsProto}//${window.location.host}/api/flows/${flowId}/ws`);
+
+                    ws.onmessage = function(event) {
+                        try {
+                            const msg = JSON.parse(event.data);
+                            const ts = new Date(msg.ts * 1000).toLocaleTimeString();
+                            switch (msg.type) {
+                                case 'progress':
+                                    terminal.innerHTML += `<div><span style="color:#8b8075">[${ts}]</span> ${msg.data.message}</div>`;
+                                    break;
+                                case 'phase_start':
+                                    terminal.innerHTML += `<div><span style="color:var(--accent-red)">[${ts}]</span> <b>Fase: ${msg.data.phase}</b></div>`;
+                                    status.innerText = `${msg.data.phase}...`;
+                                    break;
+                                case 'phase_end':
+                                    terminal.innerHTML += `<div><span style="color:var(--accent-green)">[${ts}]</span> Fase ${msg.data.phase} concluída (${msg.data.findings} findings)</div>`;
+                                    break;
+                                case 'llm_call':
+                                    terminal.innerHTML += `<div style="font-size:11px;color:var(--text-muted)">[${ts}] LLM: ${msg.data.provider}/${msg.data.model} (${(msg.data.latency_ms/1000).toFixed(1)}s)</div>`;
+                                    break;
+                                case 'tool_call':
+                                    terminal.innerHTML += `<div style="font-size:11px;color:#ffcc44">[${ts}] Tool: ${msg.data.tool} → ${msg.data.target}</div>`;
+                                    break;
+                                case 'finding':
+                                    terminal.innerHTML += `<div style="font-size:11px;color:#c02626">[${ts}] ${msg.data.severity}: ${msg.data.title}</div>`;
+                                    break;
+                                case 'error':
+                                    terminal.innerHTML += `<div><span style="color:#c02626">[${ts} ERROR]</span> ${msg.data.error}</div>`;
+                                    break;
+                                case 'complete':
+                                    terminal.innerHTML += `<div><span style="color:#4b6a4b">[${ts} SUCCESS]</span> Pipeline concluído! ${msg.data.findings_count} findings.</div>`;
+                                    status.innerText = 'Pipeline concluído';
+                                    status.style.color = 'var(--text-muted)';
+                                    status.classList.remove('scan-pulse');
+                                    // Fetch final results
+                                    fetchFlowResults(flowId);
+                                    break;
+                            }
+                            terminal.scrollTop = terminal.scrollHeight;
+                        } catch(e) {
+                            console.error('WS parse error:', e);
+                        }
+                    };
+
+                    ws.onerror = function() {
+                        terminal.innerHTML += `<div><span style="color:#ffcc44">[WARN]</span> WebSocket desconectado — continuando em polling</div>`;
+                        // Fallback: poll for flow completion
+                        pollFlowResults(flowId);
+                    };
+
+                    ws.onclose = function() {
+                        // If not yet complete, start polling
+                    };
                 } catch (err) {
                     console.error(err);
                     terminal.innerHTML += `<div><span style="color:#c02626">[ERROR]</span> ${err.message}</div>`;
                     status.innerText = 'Erro';
                     status.style.color = '#c02626';
+                    status.classList.remove('scan-pulse');
                 }
             };
+
+            async function fetchFlowResults(flowId) {
+                try {
+                    const resp = await fetch(`/api/flows/${flowId}`);
+                    if (!resp.ok) return;
+                    const data = await resp.json();
+                    updatePipelineDashboard(data);
+                    fetchFindingsStats();
+                    fetchGroupedFindings(currentDashFilter, 'findings-grouped-container', false);
+                    fetchGroupedFindings(currentVulnFilter, 'vuln-grouped-container', true);
+                } catch(e) {
+                    console.error('Error fetching flow results:', e);
+                }
+            }
+
+            let pollTimer = null;
+            async function pollFlowResults(flowId) {
+                const terminal = document.getElementById('terminal-logs');
+                const check = async () => {
+                    try {
+                        const resp = await fetch(`/api/flows/${flowId}`);
+                        if (!resp.ok) return;
+                        const data = await resp.json();
+                        if (data.status === 'completed' || data.status === 'failed') {
+                            if (pollTimer) { clearInterval(pollTimer); pollTimer = null; }
+                            const statusEl = document.getElementById('log-status');
+                            if (data.status === 'completed') {
+                                terminal.innerHTML += `<div><span style="color:#4b6a4b">[SUCCESS]</span> Pipeline concluído! (poll)</div>`;
+                                statusEl.innerText = 'Pipeline concluído';
+                            } else {
+                                terminal.innerHTML += `<div><span style="color:#c02626">[ERROR]</span> Pipeline falhou</div>`;
+                                statusEl.innerText = 'Erro';
+                            }
+                            statusEl.style.color = 'var(--text-muted)';
+                            statusEl.classList.remove('scan-pulse');
+                            updatePipelineDashboard(data);
+                            fetchFindingsStats();
+                            fetchGroupedFindings(currentDashFilter, 'findings-grouped-container', false);
+                            fetchGroupedFindings(currentVulnFilter, 'vuln-grouped-container', true);
+                        }
+                        terminal.scrollTop = terminal.scrollHeight;
+                    } catch(e) { console.error('Poll error:', e); }
+                };
+                pollTimer = setInterval(check, 2000);
+                check();
+            }
 
             window.startScanWithModules = async function() {
                 if (!currentTarget || selectedModules.size === 0) return;
@@ -1630,8 +1758,6 @@
 
                         } else if (command.startsWith("fullscan") || command.startsWith("full ")) {
                             currentTarget = target;
-                            document.getElementById('target-value').innerText = target;
-                            document.getElementById('target-display').classList.add('visible');
                             status.innerText = "Varredura completa...";
                             status.style.color = "var(--accent-red)";
 
@@ -1936,6 +2062,7 @@
                     }
                 } catch(e) {
                     console.error("Erro ao buscar grouped findings:", e);
+                    showToast('Erro ao carregar findings', 'error');
                 }
             }
 
@@ -1954,14 +2081,15 @@
                     const response = await fetch('/api/findings/stats');
                     if(response.ok) {
                         const stats = await response.json();
-                        const tf = document.querySelector('#total-findings');
-                        if (tf) tf.innerText = stats.total;
-                        document.querySelector('.val-total').innerText = stats.total;
-                        document.querySelector('.val-total').innerText = stats.total;
-                        document.querySelector('.val-critical').innerText = stats.criticas;
-                        document.querySelector('.val-high').innerText = stats.altas;
-                        document.querySelector('.val-medium').innerText = stats.medias;
-                        document.querySelector('.val-low').innerText = stats.baixas;
+                        const el = (sel, val) => {
+                            const e = document.querySelector(sel);
+                            if (e) e.innerText = val;
+                        };
+                        el('.val-total', stats.total);
+                        el('.val-critical', stats.criticas);
+                        el('.val-high', stats.altas);
+                        el('.val-medium', stats.medias);
+                        el('.val-low', stats.baixas);
 
                         // Update severity bar
                         const bar = document.getElementById('sev-dist-bar');
@@ -1981,6 +2109,7 @@
                     }
                 } catch(e) {
                     console.error("Erro ao buscar stats: ", e);
+                    showToast('Erro ao carregar estatísticas: ' + e.message, 'error');
                 }
             }
 
